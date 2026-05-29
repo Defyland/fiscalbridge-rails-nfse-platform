@@ -1,0 +1,37 @@
+{
+  "title": "FiscalBridge Overview",
+  "schemaVersion": 39,
+  "version": 1,
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "HTTP requests",
+      "targets": [
+        {
+          "expr": "sum(rate(fiscalbridge_http_requests_total[5m])) by (method, path, status)"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "HTTP p95 latency",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(fiscalbridge_http_request_duration_seconds_bucket[5m])) by (le, path))"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Outbound fiscal events",
+      "targets": [
+        {
+          "expr": "sum(fiscalbridge_outbound_events_total) by (event_type, status)"
+        }
+      ]
+    }
+  ]
+}

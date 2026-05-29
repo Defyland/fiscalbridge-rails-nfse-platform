@@ -1,0 +1,795 @@
+openapi: 3.1.0
+info:
+  title: FiscalBridge API
+  version: 1.0.0
+  summary: Multi-tenant NFS-e issuance API.
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+  - url: https://api.fiscalbridge.dev
+tags:
+  - name: Organizations
+    description: Tenant bootstrap and current tenant lookup.
+  - name: Memberships
+    description: API actors, roles, token rotation, and revocation.
+  - name: Fiscal profiles
+    description: Issuer legal identity and municipal configuration.
+  - name: Customers
+    description: Service taker records.
+  - name: Service invoices
+    description: NFS-e lifecycle commands and reads.
+  - name: Provider callbacks
+    description: Provider-originated fiscal status events.
+security:
+  - BearerAuth: []
+paths:
+  /v1/organizations:
+    post:
+      operationId: createOrganization
+      tags: [Organizations]
+      security: []
+      summary: Bootstrap a tenant and owner API token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [organization, owner]
+              properties:
+                organization:
+                  $ref: "#/components/schemas/OrganizationCreate"
+                owner:
+                  $ref: "#/components/schemas/OwnerCreate"
+      responses:
+        "201":
+          description: Tenant created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [organization, owner]
+                properties:
+                  organization:
+                    $ref: "#/components/schemas/Organization"
+                  owner:
+                    allOf:
+                      - $ref: "#/components/schemas/Membership"
+                      - type: object
+                        required: [api_token]
+                        properties:
+                          api_token:
+                            type: string
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+  /v1/organization:
+    get:
+      operationId: getCurrentOrganization
+      tags: [Organizations]
+      summary: Read the authenticated tenant
+      responses:
+        "200":
+          description: Current tenant and actor
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [organization, actor]
+                properties:
+                  organization:
+                    $ref: "#/components/schemas/Organization"
+                  actor:
+                    $ref: "#/components/schemas/Membership"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+  /v1/memberships:
+    get:
+      operationId: listMemberships
+      tags: [Memberships]
+      summary: List memberships for the current tenant
+      responses:
+        "200":
+          description: Membership list
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [memberships]
+                properties:
+                  memberships:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Membership"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+    post:
+      operationId: createMembership
+      tags: [Memberships]
+      summary: Create a membership and API token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [membership]
+              properties:
+                membership:
+                  $ref: "#/components/schemas/MembershipCreate"
+      responses:
+        "201":
+          description: Membership created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [membership]
+                properties:
+                  membership:
+                    allOf:
+                      - $ref: "#/components/schemas/Membership"
+                      - type: object
+                        properties:
+                          api_token:
+                            type: string
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+  /v1/memberships/{id}:
+    patch:
+      operationId: updateMembership
+      tags: [Memberships]
+      summary: Update a membership role or state
+      parameters:
+        - $ref: "#/components/parameters/NumericId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [membership]
+              properties:
+                membership:
+                  $ref: "#/components/schemas/MembershipUpdate"
+      responses:
+        "200":
+          description: Membership updated
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /v1/memberships/{id}/rotate_token:
+    patch:
+      operationId: rotateMembershipToken
+      tags: [Memberships]
+      summary: Rotate a membership API token
+      parameters:
+        - $ref: "#/components/parameters/NumericId"
+      responses:
+        "200":
+          description: Token rotated
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /v1/memberships/{id}/revoke_token:
+    patch:
+      operationId: revokeMembershipToken
+      tags: [Memberships]
+      summary: Revoke a membership API token
+      parameters:
+        - $ref: "#/components/parameters/NumericId"
+      responses:
+        "200":
+          description: Token revoked
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /v1/fiscal_profiles:
+    get:
+      operationId: listFiscalProfiles
+      tags: [Fiscal profiles]
+      summary: List fiscal profiles
+      responses:
+        "200":
+          description: Fiscal profile list
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [fiscal_profiles]
+                properties:
+                  fiscal_profiles:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/FiscalProfile"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      operationId: createFiscalProfile
+      tags: [Fiscal profiles]
+      summary: Create a fiscal profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [fiscal_profile]
+              properties:
+                fiscal_profile:
+                  $ref: "#/components/schemas/FiscalProfileCreate"
+      responses:
+        "201":
+          description: Fiscal profile created
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+  /v1/fiscal_profiles/{id}:
+    get:
+      operationId: getFiscalProfile
+      tags: [Fiscal profiles]
+      summary: Read a fiscal profile
+      parameters:
+        - $ref: "#/components/parameters/NumericId"
+      responses:
+        "200":
+          description: Fiscal profile
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      operationId: updateFiscalProfile
+      tags: [Fiscal profiles]
+      summary: Update a fiscal profile
+      parameters:
+        - $ref: "#/components/parameters/NumericId"
+      responses:
+        "200":
+          description: Fiscal profile updated
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /v1/customers:
+    get:
+      operationId: listCustomers
+      tags: [Customers]
+      summary: List customers
+      responses:
+        "200":
+          description: Customer list
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      operationId: createCustomer
+      tags: [Customers]
+      summary: Create a customer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [customer]
+              properties:
+                customer:
+                  $ref: "#/components/schemas/CustomerCreate"
+      responses:
+        "201":
+          description: Customer created
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+  /v1/customers/{id}:
+    get:
+      operationId: getCustomer
+      tags: [Customers]
+      summary: Read a customer
+      parameters:
+        - $ref: "#/components/parameters/NumericId"
+      responses:
+        "200":
+          description: Customer
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      operationId: updateCustomer
+      tags: [Customers]
+      summary: Update a customer
+      parameters:
+        - $ref: "#/components/parameters/NumericId"
+      responses:
+        "200":
+          description: Customer updated
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /v1/service_invoices:
+    get:
+      operationId: listServiceInvoices
+      tags: [Service invoices]
+      summary: List service invoices
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/ServiceInvoiceStatus"
+      responses:
+        "200":
+          description: Service invoice list
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [service_invoices]
+                properties:
+                  service_invoices:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ServiceInvoice"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      operationId: createServiceInvoice
+      tags: [Service invoices]
+      summary: Create a service invoice idempotently
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [service_invoice]
+              properties:
+                service_invoice:
+                  $ref: "#/components/schemas/ServiceInvoiceCreate"
+      responses:
+        "201":
+          description: Service invoice created
+          headers:
+            ETag:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [service_invoice, idempotent_replay]
+                properties:
+                  service_invoice:
+                    $ref: "#/components/schemas/ServiceInvoice"
+                  idempotent_replay:
+                    type: boolean
+        "400":
+          $ref: "#/components/responses/MissingIdempotencyKey"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+  /v1/service_invoices/{id}:
+    get:
+      operationId: getServiceInvoice
+      tags: [Service invoices]
+      summary: Read a service invoice
+      parameters:
+        - $ref: "#/components/parameters/PublicInvoiceId"
+      responses:
+        "200":
+          description: Service invoice
+          headers:
+            ETag:
+              schema:
+                type: string
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /v1/service_invoices/{id}/issue:
+    post:
+      operationId: issueServiceInvoice
+      tags: [Service invoices]
+      summary: Request asynchronous NFS-e issuance
+      parameters:
+        - $ref: "#/components/parameters/PublicInvoiceId"
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "202":
+          description: Issue request accepted
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+  /v1/service_invoices/{id}/cancel:
+    post:
+      operationId: cancelServiceInvoice
+      tags: [Service invoices]
+      summary: Request asynchronous NFS-e cancellation
+      parameters:
+        - $ref: "#/components/parameters/PublicInvoiceId"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [cancellation]
+              properties:
+                cancellation:
+                  type: object
+                  required: [reason]
+                  properties:
+                    reason:
+                      type: string
+      responses:
+        "202":
+          description: Cancel request accepted
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /v1/service_invoices/{id}/poll_status:
+    post:
+      operationId: pollServiceInvoiceStatus
+      tags: [Service invoices]
+      summary: Request asynchronous provider status polling
+      parameters:
+        - $ref: "#/components/parameters/PublicInvoiceId"
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "202":
+          description: Status poll scheduled
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /v1/provider_callbacks/nfse:
+    post:
+      operationId: receiveNfseProviderCallback
+      tags: [Provider callbacks]
+      summary: Receive an idempotent NFS-e provider callback
+      security: []
+      parameters:
+        - name: X-Provider-Token
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [callback]
+              properties:
+                callback:
+                  type: object
+                  required: [callback_id, provider_invoice_number, status]
+                  properties:
+                    callback_id:
+                      type: string
+                    provider_invoice_number:
+                      type: string
+                    status:
+                      type: string
+                      enum: [issued, cancelled]
+                    provider_protocol:
+                      type: string
+      responses:
+        "202":
+          description: Callback accepted idempotently
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+  parameters:
+    NumericId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    PublicInvoiceId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: "^NFS-[0-9]{6}$"
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+    IfMatch:
+      name: If-Match
+      in: header
+      required: true
+      schema:
+        type: string
+  responses:
+    Unauthorized:
+      description: Authentication failed.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    Forbidden:
+      description: The actor lacks the required permission.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    NotFound:
+      description: Resource not found or hidden by tenant isolation.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    ValidationFailed:
+      description: Input validation failed.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    Conflict:
+      description: State transition or optimistic locking conflict.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    PreconditionRequired:
+      description: Missing If-Match precondition.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    RateLimited:
+      description: Rate limit exceeded.
+      headers:
+        Retry-After:
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    MissingIdempotencyKey:
+      description: Missing Idempotency-Key header.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+  schemas:
+    OrganizationCreate:
+      type: object
+      required: [name, slug]
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+        legal_name:
+          type: string
+        tax_id:
+          type: string
+        municipal_registration:
+          type: string
+        plan:
+          type: string
+          enum: [starter, growth, enterprise]
+        monthly_invoice_limit:
+          type: integer
+    Organization:
+      allOf:
+        - $ref: "#/components/schemas/OrganizationCreate"
+        - type: object
+          required: [id, state, seat_limit, monthly_invoice_limit, current_month_invoice_count, next_invoice_sequence]
+          properties:
+            id:
+              type: integer
+            state:
+              type: string
+            seat_limit:
+              type: integer
+            current_month_invoice_count:
+              type: integer
+            next_invoice_sequence:
+              type: integer
+            created_at:
+              type: string
+              format: date-time
+            updated_at:
+              type: string
+              format: date-time
+    OwnerCreate:
+      type: object
+      required: [email, full_name]
+      properties:
+        email:
+          type: string
+          format: email
+        full_name:
+          type: string
+    MembershipCreate:
+      type: object
+      required: [email, full_name]
+      properties:
+        email:
+          type: string
+          format: email
+        full_name:
+          type: string
+        role:
+          type: string
+          enum: [admin, operator, auditor]
+    MembershipUpdate:
+      type: object
+      properties:
+        full_name:
+          type: string
+        role:
+          type: string
+          enum: [owner, admin, operator, auditor]
+        state:
+          type: string
+          enum: [active, suspended]
+    Membership:
+      type: object
+      required: [id, email, full_name, role, state]
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        full_name:
+          type: string
+        role:
+          type: string
+        state:
+          type: string
+        api_token_last_eight:
+          type: string
+        api_token_expires_at:
+          type: string
+          format: date-time
+    FiscalProfileCreate:
+      type: object
+      required: [legal_name, tax_id, municipal_registration, city_code, service_list_item]
+      properties:
+        legal_name:
+          type: string
+        trade_name:
+          type: string
+        tax_id:
+          type: string
+        municipal_registration:
+          type: string
+        city_code:
+          type: string
+        service_list_item:
+          type: string
+        taxation_regime:
+          type: string
+          enum: [simples_nacional, lucro_presumido, lucro_real]
+        environment:
+          type: string
+          enum: [sandbox, production]
+        default_profile:
+          type: boolean
+    FiscalProfile:
+      allOf:
+        - $ref: "#/components/schemas/FiscalProfileCreate"
+        - type: object
+          required: [id]
+          properties:
+            id:
+              type: integer
+    CustomerCreate:
+      type: object
+      required: [legal_name, document_type, document_number, city_code]
+      properties:
+        legal_name:
+          type: string
+        document_type:
+          type: string
+          enum: [cnpj, cpf, foreign]
+        document_number:
+          type: string
+        email:
+          type: string
+          format: email
+        city_code:
+          type: string
+        address_line:
+          type: string
+        state_code:
+          type: string
+        country_code:
+          type: string
+    Customer:
+      allOf:
+        - $ref: "#/components/schemas/CustomerCreate"
+        - type: object
+          required: [id]
+          properties:
+            id:
+              type: integer
+    ServiceInvoiceStatus:
+      type: string
+      enum: [draft, pending_issue, issued, rejected, pending_cancellation, cancelled, cancellation_failed]
+    ServiceInvoiceCreate:
+      type: object
+      required: [fiscal_profile_id, customer_id, service_description, service_code, amount_cents]
+      properties:
+        fiscal_profile_id:
+          type: integer
+        customer_id:
+          type: integer
+        service_description:
+          type: string
+        service_code:
+          type: string
+        amount_cents:
+          type: integer
+        tax_rate_bps:
+          type: integer
+        iss_withheld:
+          type: boolean
+    ServiceInvoice:
+      type: object
+      required: [id, status, service_description, service_code, amount_cents, tax_rate_bps, lock_version]
+      properties:
+        id:
+          type: string
+        status:
+          $ref: "#/components/schemas/ServiceInvoiceStatus"
+        service_description:
+          type: string
+        service_code:
+          type: string
+        amount_cents:
+          type: integer
+        tax_rate_bps:
+          type: integer
+        iss_withheld:
+          type: boolean
+        idempotency_key:
+          type: string
+        provider_invoice_number:
+          type: string
+        provider_verification_code:
+          type: string
+        provider_protocol:
+          type: string
+        rejection_reason:
+          type: string
+        cancellation_reason:
+          type: string
+        xml_url:
+          type: string
+        pdf_url:
+          type: string
+        lock_version:
+          type: integer
+        fiscal_profile:
+          $ref: "#/components/schemas/FiscalProfile"
+        customer:
+          $ref: "#/components/schemas/Customer"
+        created_by:
+          $ref: "#/components/schemas/Membership"
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: object
+              additionalProperties: true
+            request_id:
+              type: string
+            correlation_id:
+              type: string

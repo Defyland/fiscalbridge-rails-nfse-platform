@@ -1,26 +1,23 @@
 # FiscalBridge Engineering Baseline
 
-This repository follows the initiative-wide standards below.
+FiscalBridge satisfies the initiative-wide baseline through a working Rails API, documented HTTP contract, automated tests, CI, security controls, observability, benchmark artifacts, and operational runbooks.
 
 ## Mandatory outcomes
 
-- product-grade `README.md` with product and engineering sections
-- `openapi.yaml` once the HTTP surface exists
+- product-grade `README.md` with all 19 required sections
+- `openapi.yaml` with versioned API paths and shared error responses
 - `docs/adr/`, `docs/architecture/`, `docs/benchmarks/`, `docs/api/`, `docs/diagrams/`, and `docs/runbooks/`
-- atomic Conventional Commit history
-- GitHub Actions for lint, tests, security, build, coverage, and OpenAPI validation
-- observability with structured logs, metrics, traces, request IDs, and readiness endpoints
-- documented k6 performance baselines
+- GitHub Actions covering lint, security, tests, OpenAPI linting, Docker build, and coverage artifact upload
+- observability with JSON logs, request/correlation ids, traces, readiness, and Prometheus metrics
+- k6 benchmark scenarios and measured result artifacts
 
-## FiscalBridge-specific emphasis
+## FiscalBridge-specific evidence
 
-- provider adapter contracts decoupled from the fiscal domain
-- idempotent invoice issuance keyed by organization and request identity
-- async issue, cancel, status polling, and document generation jobs
-- append-only fiscal audit logs with correlation-aware provider evidence
+- provider adapter contract decoupled from fiscal domain services
+- idempotent invoice creation keyed by organization and request identity
+- async issue, cancel, and status-poll jobs
+- append-only audit logs with provider request evidence
 - traceable invoice lifecycle transitions across local and provider states
-- failure coverage for provider timeouts, duplicate callbacks, and safe reprocessing
-
-## Phase 0 boundary
-
-This repository intentionally stops before scaffolding Rails, provider adapters, queues, or fiscal document generation. The goal of this phase is only to lock scope and standards.
+- failure coverage for provider timeouts, duplicate callbacks, stale preconditions, tenant isolation, and safe reprocessing
+- plan-based seat and invoice quotas
+- PostgreSQL row-lock design for invoice sequence and quota behavior
