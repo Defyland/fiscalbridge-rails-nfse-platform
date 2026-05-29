@@ -8,7 +8,7 @@ CI.run do
   step "Security: Gem audit", "bundle exec bundler-audit check --update"
   step "Security: Brakeman code analysis", "bin/brakeman --quiet --no-pager --exit-on-warn --exit-on-error"
   step "Contract: OpenAPI", "npx @redocly/cli@latest lint openapi.yaml"
-  step "Tests: Rails", "env RAILS_ENV=test bin/rails db:drop db:create db:migrate test"
+  step "Tests: Rails", "env RAILS_ENV=test bin/rails db:migrate:reset test"
   step "Tests: Seeds", "env RAILS_ENV=test bin/rails db:seed:replant"
 
   # Optional: Run system tests

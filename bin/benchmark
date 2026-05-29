@@ -121,7 +121,7 @@ server_log = nil
 
 begin
   if prepare_database
-    run!(RUBY, "bin/rails", "db:drop", "db:create", "db:migrate", env: { "RAILS_ENV" => rails_env })
+    run!(RUBY, "bin/rails", "db:migrate:reset", env: { "RAILS_ENV" => rails_env })
   end
 
   if managed_server

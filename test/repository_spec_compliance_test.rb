@@ -199,9 +199,7 @@ class RepositorySpecComplianceTest < ActiveSupport::TestCase
     benchmark_runner = read_file("bin/benchmark")
     %w[
       BENCHMARK_RAILS_ENV
-      db:drop
-      db:create
-      db:migrate
+      db:migrate:reset
       wait_for_ready!
       server
       resource-samples
