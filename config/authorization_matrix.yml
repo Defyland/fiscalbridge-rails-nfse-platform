@@ -1,0 +1,67 @@
+roles:
+  owner:
+    - organizations_read
+    - memberships_list
+    - memberships_create
+    - memberships_update
+    - memberships_rotate_token
+    - memberships_revoke_token
+    - fiscal_profiles_list
+    - fiscal_profiles_read
+    - fiscal_profiles_create
+    - fiscal_profiles_update
+    - customers_list
+    - customers_read
+    - customers_create
+    - customers_update
+    - service_invoices_list
+    - service_invoices_read
+    - service_invoices_create
+    - service_invoices_issue
+    - service_invoices_cancel
+    - service_invoices_poll_status
+  admin:
+    - organizations_read
+    - memberships_list
+    - memberships_create
+    - memberships_update
+    - memberships_rotate_token
+    - memberships_revoke_token
+    - fiscal_profiles_list
+    - fiscal_profiles_read
+    - fiscal_profiles_create
+    - fiscal_profiles_update
+    - customers_list
+    - customers_read
+    - customers_create
+    - customers_update
+    - service_invoices_list
+    - service_invoices_read
+    - service_invoices_create
+    - service_invoices_issue
+    - service_invoices_cancel
+    - service_invoices_poll_status
+  operator:
+    - organizations_read
+    - memberships_list
+    - fiscal_profiles_list
+    - fiscal_profiles_read
+    - customers_list
+    - customers_read
+    - customers_create
+    - customers_update
+    - service_invoices_list
+    - service_invoices_read
+    - service_invoices_create
+    - service_invoices_issue
+    - service_invoices_cancel
+    - service_invoices_poll_status
+  auditor:
+    - organizations_read
+    - memberships_list
+    - fiscal_profiles_list
+    - fiscal_profiles_read
+    - customers_list
+    - customers_read
+    - service_invoices_list
+    - service_invoices_read
