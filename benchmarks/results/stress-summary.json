@@ -1,0 +1,180 @@
+{
+    "root_group": {
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {
+            "setup": {
+                "name": "setup",
+                "path": "::setup",
+                "id": "5c0f8025f7e0b6654089e5b00e950f1a",
+                "groups": {},
+                "checks": {
+                        "bootstrap returns 201": {
+                            "passes": 1,
+                            "fails": 0,
+                            "name": "bootstrap returns 201",
+                            "path": "::setup::bootstrap returns 201",
+                            "id": "ec868283158316a8e5a01e0736fc715a"
+                        },
+                        "seed invoice returns 201": {
+                            "path": "::setup::seed invoice returns 201",
+                            "id": "edc109c7a3445ddb815eef1e848b9cff",
+                            "passes": 1,
+                            "fails": 0,
+                            "name": "seed invoice returns 201"
+                        }
+                    }
+            }
+        },
+        "checks": {
+            "invoice read returns 200": {
+                "name": "invoice read returns 200",
+                "path": "::invoice read returns 200",
+                "id": "3df04054b59744cf9fa69b46932820d0",
+                "passes": 4922,
+                "fails": 0
+            },
+            "organization read returns 200": {
+                "name": "organization read returns 200",
+                "path": "::organization read returns 200",
+                "id": "20c373a2d2d5b606153e231d542ae3d7",
+                "passes": 1752,
+                "fails": 0
+            },
+            "invoice create returns 201": {
+                "path": "::invoice create returns 201",
+                "id": "6734b18df2df06f960d2658f03ee8cca",
+                "passes": 2172,
+                "fails": 0,
+                "name": "invoice create returns 201"
+            }
+        }
+    },
+    "metrics": {
+        "http_reqs": {
+            "count": 8848,
+            "rate": 110.15845873475713
+        },
+        "http_req_duration": {
+            "max": 466.784,
+            "p(90)": 71.6538,
+            "p(95)": 91.78149999999997,
+            "p(99)": 205.44613999999996,
+            "avg": 34.20204871157313,
+            "min": 2.331,
+            "med": 22.3355
+        },
+        "vus_max": {
+            "value": 30,
+            "min": 30,
+            "max": 30
+        },
+        "data_sent": {
+            "count": 2658514,
+            "rate": 33098.75731970774
+        },
+        "http_req_duration{expected_response:true}": {
+            "max": 466.784,
+            "p(90)": 71.6538,
+            "p(95)": 91.78149999999997,
+            "p(99)": 205.44613999999996,
+            "avg": 34.20204871157313,
+            "min": 2.331,
+            "med": 22.3355
+        },
+        "data_received": {
+            "count": 10621479,
+            "rate": 132238.44440818144
+        },
+        "http_req_sending": {
+            "p(99)": 0.052,
+            "avg": 0.011903254972875536,
+            "min": 0.002,
+            "med": 0.009,
+            "max": 2.197,
+            "p(90)": 0.017,
+            "p(95)": 0.023
+        },
+        "iterations": {
+            "count": 8846,
+            "rate": 110.13355854064892
+        },
+        "http_req_tls_handshaking": {
+            "med": 0,
+            "max": 0,
+            "p(90)": 0,
+            "p(95)": 0,
+            "p(99)": 0,
+            "avg": 0,
+            "min": 0
+        },
+        "http_req_blocked": {
+            "p(90)": 0.004,
+            "p(95)": 0.005,
+            "p(99)": 0.017,
+            "avg": 0.004932640144665474,
+            "min": 0,
+            "med": 0.002,
+            "max": 5.413
+        },
+        "http_req_connecting": {
+            "p(90)": 0,
+            "p(95)": 0,
+            "p(99)": 0,
+            "avg": 0.0013981690777576852,
+            "min": 0,
+            "med": 0,
+            "max": 0.743
+        },
+        "vus": {
+            "value": 1,
+            "min": 1,
+            "max": 29
+        },
+        "checks": {
+            "passes": 8848,
+            "fails": 0,
+            "value": 1
+        },
+        "iteration_duration": {
+            "p(95)": 192.46701049999996,
+            "p(99)": 306.00613749999997,
+            "avg": 134.75341255561767,
+            "min": 102.436042,
+            "med": 122.8901045,
+            "max": 567.097834,
+            "p(90)": 172.1148335
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 8848,
+            "thresholds": {
+                "rate<0.05": false
+            },
+            "value": 0
+        },
+        "http_req_waiting": {
+            "max": 466.74,
+            "p(90)": 71.6113,
+            "p(95)": 91.71474999999998,
+            "p(99)": 205.39601999999996,
+            "avg": 34.16036200271244,
+            "min": 2.312,
+            "med": 22.278
+        },
+        "http_req_receiving": {
+            "p(99)": 0.10105999999999984,
+            "avg": 0.029783453887883754,
+            "min": 0.01,
+            "med": 0.024,
+            "max": 3.635,
+            "p(90)": 0.045,
+            "p(95)": 0.055
+        }
+    },
+    "setup_data": {
+        "seededInvoiceId": "NFS-000001",
+        "token": "sn_owner_dq5gRz5jiX2ro8pXmwtgvdGWzWBxDL9J"
+    }
+}
