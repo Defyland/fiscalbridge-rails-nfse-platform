@@ -15,7 +15,17 @@
     "correlation_id": { "type": "string" },
     "provider": { "type": "string" },
     "environment": { "type": "string", "enum": ["sandbox", "homologation", "production"] },
-    "payload": { "type": "object" }
+    "payload": {
+      "type": "object",
+      "required": ["service_invoice", "provider_protocol", "rejection_reason", "provider_request_id"],
+      "properties": {
+        "service_invoice": { "type": "object" },
+        "provider_protocol": { "type": "string" },
+        "rejection_reason": { "type": "string" },
+        "provider_request_id": { "type": "integer" }
+      },
+      "additionalProperties": true
+    }
   },
   "additionalProperties": false
 }

@@ -41,8 +41,34 @@ module Events
         correlation_id: correlation_id,
         provider: provider_for(aggregate),
         environment: aggregate.fiscal_profile.environment,
-        payload: payload
+        payload: fiscal_payload(aggregate, payload)
       }
+    end
+
+    def self.fiscal_payload(aggregate, payload)
+      raw_payload = payload.deep_stringify_keys
+      service_invoice = raw_payload["service_invoice"] || aggregate.as_api_json.deep_stringify_keys
+
+      stable_payload = {
+        "service_invoice" => service_invoice,
+        "status" => aggregate.status,
+        "amount_cents" => aggregate.amount_cents,
+        "customer_document" => aggregate.customer.document_number,
+        "fiscal_profile_id" => aggregate.fiscal_profile_id,
+        "idempotency_key" => aggregate.idempotency_key,
+        "lock_version" => aggregate.lock_version,
+        "provider_invoice_number" => aggregate.provider_invoice_number,
+        "provider_verification_code" => aggregate.provider_verification_code,
+        "provider_protocol" => aggregate.provider_protocol,
+        "rejection_reason" => aggregate.rejection_reason,
+        "cancellation_reason" => aggregate.cancellation_reason,
+        "issued_at" => aggregate.issued_at&.iso8601,
+        "cancelled_at" => aggregate.cancelled_at&.iso8601,
+        "xml_sha256" => aggregate.xml_sha256,
+        "pdf_sha256" => aggregate.pdf_sha256
+      }.compact
+
+      stable_payload.merge(raw_payload.except("service_invoice"))
     end
 
     def self.fiscal_event?(aggregate, event_type)
@@ -53,6 +79,6 @@ module Events
       aggregate.provider_requests.recent_first.first&.provider_name || Providers::SandboxNfseClient.provider_name
     end
 
-    private_class_method :normalize_payload, :fiscal_event?, :provider_for
+    private_class_method :normalize_payload, :fiscal_payload, :fiscal_event?, :provider_for
   end
 end

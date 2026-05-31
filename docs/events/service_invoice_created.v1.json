@@ -15,7 +15,21 @@
     "correlation_id": { "type": "string" },
     "provider": { "type": "string" },
     "environment": { "type": "string", "enum": ["sandbox", "homologation", "production"] },
-    "payload": { "type": "object" }
+    "payload": {
+      "type": "object",
+      "required": ["service_invoice", "status", "amount_cents", "customer_document", "fiscal_profile_id", "idempotency_key", "lock_version"],
+      "properties": {
+        "service_invoice": { "type": "object" },
+        "status": { "type": "string", "const": "draft" },
+        "amount_cents": { "type": "integer", "minimum": 1 },
+        "customer_document": { "type": "string" },
+        "fiscal_profile_id": { "type": "integer" },
+        "idempotency_key": { "type": "string" },
+        "lock_version": { "type": "integer", "minimum": 0 },
+        "actor_membership_id": { "type": "integer" }
+      },
+      "additionalProperties": true
+    }
   },
   "additionalProperties": false
 }

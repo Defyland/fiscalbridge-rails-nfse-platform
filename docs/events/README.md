@@ -26,7 +26,7 @@ Every fiscal event must include:
 | `correlation_id` | string | yes | Request/job/provider correlation id. |
 | `provider` | string | yes | Provider adapter name, for example `sandbox_nfse`. |
 | `environment` | string | yes | `homologation`, `production`, or `sandbox`. |
-| `payload` | object | yes | Event-specific payload. |
+| `payload` | object | yes | Event-specific payload with stable top-level fields plus a `service_invoice` snapshot. |
 
 Example envelope:
 
@@ -84,6 +84,9 @@ Example envelope:
 
 - Use public invoice ids, not internal numeric ids, for externally delivered
   events.
+- Keep event-specific required fields at the top level of `payload`; the nested
+  `payload.service_invoice` object is a convenience snapshot and is not a
+  substitute for the stable contract fields.
 - Include provider identifiers only after the provider has returned them.
 - Include SHA-256 fields only for the exact artifact bytes persisted to storage.
 - Include `provider_request_id` whenever an event is caused by provider
@@ -114,4 +117,6 @@ processed `event_id` or a provider-specific idempotency key.
 The JSON schemas currently cover externally relevant lifecycle events. Internal
 events such as `issue_requested`, `cancel_requested`, `status_polled`, and
 `provider_timeout` are versioned in this catalog and can receive schema files
-before being exposed to external webhook consumers.
+before being exposed to external webhook consumers. The existing schema files
+validate both the shared envelope and the externally relevant event-specific
+payload fields.

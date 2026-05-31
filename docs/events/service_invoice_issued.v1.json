@@ -15,7 +15,21 @@
     "correlation_id": { "type": "string" },
     "provider": { "type": "string" },
     "environment": { "type": "string", "enum": ["sandbox", "homologation", "production"] },
-    "payload": { "type": "object" }
+    "payload": {
+      "type": "object",
+      "required": ["service_invoice", "provider_invoice_number", "provider_verification_code", "provider_protocol", "issued_at", "xml_sha256", "pdf_sha256", "provider_request_id"],
+      "properties": {
+        "service_invoice": { "type": "object" },
+        "provider_invoice_number": { "type": "string" },
+        "provider_verification_code": { "type": "string" },
+        "provider_protocol": { "type": "string" },
+        "issued_at": { "type": "string", "format": "date-time" },
+        "xml_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "pdf_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "provider_request_id": { "type": "integer" }
+      },
+      "additionalProperties": true
+    }
   },
   "additionalProperties": false
 }

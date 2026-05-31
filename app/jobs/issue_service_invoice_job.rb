@@ -49,7 +49,13 @@ class IssueServiceInvoiceJob < ApplicationJob
       organization: invoice.organization,
       aggregate: invoice,
       event_type: "service_invoice.provider_timeout",
-      payload: { service_invoice: invoice.as_api_json, error: error.message }
+      payload: {
+        service_invoice: invoice.as_api_json,
+        operation: "issue",
+        provider_request_id: provider_request&.id,
+        last_error: error.message,
+        retryable: true
+      }
     )
   end
 end

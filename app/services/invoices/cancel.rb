@@ -11,7 +11,7 @@ module Invoices
           cancellation_reason: reason
         )
 
-        ProviderRequest.create!(
+        provider_request = ProviderRequest.create!(
           organization: invoice.organization,
           service_invoice: invoice,
           provider_name: "sandbox_nfse",
@@ -34,7 +34,11 @@ module Invoices
           organization: invoice.organization,
           aggregate: invoice,
           event_type: "service_invoice.cancel_requested",
-          payload: { service_invoice: invoice.as_api_json, actor_membership_id: actor.id }
+          payload: {
+            service_invoice: invoice.as_api_json,
+            actor_membership_id: actor.id,
+            provider_request_id: provider_request.id
+          }
         )
 
         ActiveRecord.after_all_transactions_commit do

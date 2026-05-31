@@ -19,7 +19,11 @@ class StatusPollServiceInvoiceJob < ApplicationJob
       organization: invoice.organization,
       aggregate: invoice,
       event_type: "service_invoice.status_polled",
-      payload: { service_invoice: invoice.as_api_json, provider_request_id: provider_request.id }
+      payload: {
+        service_invoice: invoice.as_api_json,
+        provider_request_id: provider_request.id,
+        provider_status: result.status
+      }
     )
   end
 end
