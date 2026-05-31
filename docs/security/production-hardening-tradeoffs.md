@@ -20,9 +20,11 @@ The project now handles the practical hardening that fits this repository:
 - provider-returned fiscal artifacts attached through Active Storage with
   SHA-256 verification and digest persistence on `service_invoices`.
 - transactional outbox retries that persist the next attempt, enqueue delayed
-  retries, and sweep due pending events.
+  retries, claim work under row lock, and sweep due pending or stale processing
+  events.
 - provider callbacks that fail closed in production when the shared callback
   token is not configured.
+- bounded cursor pagination on registry and invoice list endpoints.
 
 The remaining production gaps are not accidental. They need real operational
 inputs: legal provider credentials, certificate strategy, fraud/risk appetite,
@@ -167,6 +169,41 @@ truthful.
 - Add signed download endpoints instead of exposing storage URLs directly.
 - Build reconciliation jobs that compare local invoice state against provider
   state and raise operational alerts on drift.
+
+## Outbound event delivery realism
+
+### Concern
+
+A repo can easily pretend to have webhooks by marking rows as dispatched without
+actually delivering anywhere. That creates false confidence: retry code looks
+green, but no downstream system ever sees the event.
+
+### What this repo implements now
+
+- Outbox dispatch claims rows under database lock before delivery.
+- Active `processing` events are skipped; stale `processing` events are swept and
+  retried.
+- The default delivery adapter is an explicit local log sink, not an accidental
+  no-op.
+- Unsupported delivery adapter configuration fails the event back into retry
+  metadata instead of losing the signal.
+- Fiscal `service_invoice.*` event payloads expose documented stable top-level
+  fields and tests assert schema-required payload fields.
+
+### Why this is enough for this repo
+
+Real webhook delivery needs endpoint ownership, authentication/signing, retry
+SLOs, replay tooling, and customer-facing subscription management. Those are
+product and infrastructure decisions. The local adapter keeps the repo honest:
+it proves the outbox mechanics without inventing fake external infrastructure.
+
+### Production follow-up
+
+- Add a signed HTTP webhook adapter with timestamp replay protection.
+- Store delivery response status, latency, and downstream endpoint id.
+- Add dead-letter inspection and replay controls in the backoffice.
+- Add subscription management and per-tenant webhook secrets.
+- Add contract tests against representative downstream consumers.
 
 ## Final position
 

@@ -59,6 +59,20 @@ curl -X POST http://localhost:3000/v1/customers \
   }'
 ```
 
+## List registries with pagination
+
+```sh
+curl "http://localhost:3000/v1/customers?limit=50" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+Use the returned `pagination.next_cursor` as the next request's `cursor`:
+
+```sh
+curl "http://localhost:3000/v1/customers?limit=50&cursor=123" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
 ## Create service invoice
 
 ```sh

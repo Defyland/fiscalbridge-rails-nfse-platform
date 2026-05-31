@@ -32,6 +32,20 @@
 - update service invoice state and provider request evidence together
 - duplicate callbacks are accepted through provider idempotency key uniqueness
 
+### Registry mutations
+
+- boundaries: `Customers::Create.call!`, `Customers::Update.call!`, `FiscalProfiles::Create.call!`, and `FiscalProfiles::Update.call!`
+- create or update tenant registry records with audit and outbox records in one transaction
+- rollback tests prove a failed outbox write does not leave a customer or fiscal profile mutation committed without its operational evidence
+
+### Outbox dispatch
+
+- boundary: `OutboundEventDispatchJob#claim_event`
+- claims an event with a row lock before delivery and increments `attempts_count` once per claim
+- skips non-stale `processing` events to avoid duplicate delivery attempts
+- recovers stale `processing` events through `OutboundEvent.due_for_dispatch` and `DispatchDueOutboundEventsJob`
+- unsupported event types fail closed; delivery failures persist `last_error`, calculate `next_attempt_at`, and enqueue the delayed retry
+
 ## Indexes and constraints
 
 - `organizations.slug` unique
@@ -44,6 +58,10 @@
 - `provider_requests.idempotency_key` unique
 - check constraints enforce role, state, invoice status, positive amounts, and retry counters
 - foreign keys protect all tenant-owned relationships
+
+## API pagination
+
+Registry list endpoints (`memberships`, `fiscal_profiles`, and `customers`) use bounded numeric cursor pagination. The service invoice list uses bounded cursor pagination by public invoice id so clients do not need internal numeric identifiers for fiscal documents. All list endpoints clamp `limit` to 100 records per page.
 
 ## Optimistic locking
 

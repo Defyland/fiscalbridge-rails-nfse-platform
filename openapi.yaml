@@ -90,6 +90,9 @@ paths:
       operationId: listMemberships
       tags: [Memberships]
       summary: List memberships for the current tenant
+      parameters:
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
       responses:
         "200":
           description: Membership list
@@ -97,14 +100,18 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [memberships]
+                required: [memberships, pagination]
                 properties:
                   memberships:
                     type: array
                     items:
                       $ref: "#/components/schemas/Membership"
+                  pagination:
+                    $ref: "#/components/schemas/CursorPagination"
         "403":
           $ref: "#/components/responses/Forbidden"
+        "400":
+          $ref: "#/components/responses/InvalidCursor"
         "429":
           $ref: "#/components/responses/RateLimited"
     post:
@@ -192,6 +199,9 @@ paths:
       operationId: listFiscalProfiles
       tags: [Fiscal profiles]
       summary: List fiscal profiles
+      parameters:
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
       responses:
         "200":
           description: Fiscal profile list
@@ -199,14 +209,18 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [fiscal_profiles]
+                required: [fiscal_profiles, pagination]
                 properties:
                   fiscal_profiles:
                     type: array
                     items:
                       $ref: "#/components/schemas/FiscalProfile"
+                  pagination:
+                    $ref: "#/components/schemas/CursorPagination"
         "403":
           $ref: "#/components/responses/Forbidden"
+        "400":
+          $ref: "#/components/responses/InvalidCursor"
     post:
       operationId: createFiscalProfile
       tags: [Fiscal profiles]
@@ -254,11 +268,28 @@ paths:
       operationId: listCustomers
       tags: [Customers]
       summary: List customers
+      parameters:
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
       responses:
         "200":
           description: Customer list
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [customers, pagination]
+                properties:
+                  customers:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Customer"
+                  pagination:
+                    $ref: "#/components/schemas/CursorPagination"
         "403":
           $ref: "#/components/responses/Forbidden"
+        "400":
+          $ref: "#/components/responses/InvalidCursor"
     post:
       operationId: createCustomer
       tags: [Customers]
@@ -394,6 +425,14 @@ paths:
       responses:
         "202":
           description: Issue request accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [service_invoice]
+                properties:
+                  service_invoice:
+                    $ref: "#/components/schemas/ServiceInvoice"
         "409":
           $ref: "#/components/responses/Conflict"
         "428":
@@ -423,8 +462,18 @@ paths:
       responses:
         "202":
           description: Cancel request accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [service_invoice]
+                properties:
+                  service_invoice:
+                    $ref: "#/components/schemas/ServiceInvoice"
         "409":
           $ref: "#/components/responses/Conflict"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
   /v1/service_invoices/{id}/poll_status:
     post:
       operationId: pollServiceInvoiceStatus
@@ -436,8 +485,18 @@ paths:
       responses:
         "202":
           description: Status poll scheduled
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [provider_request]
+                properties:
+                  provider_request:
+                    type: object
         "409":
           $ref: "#/components/responses/Conflict"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
   /v1/provider_callbacks/nfse:
     post:
       operationId: receiveNfseProviderCallback
@@ -575,6 +634,12 @@ components:
             $ref: "#/components/schemas/ErrorEnvelope"
     MissingIdempotencyKey:
       description: Missing Idempotency-Key header.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    InvalidCursor:
+      description: Cursor cannot be parsed for this endpoint.
       content:
         application/json:
           schema:

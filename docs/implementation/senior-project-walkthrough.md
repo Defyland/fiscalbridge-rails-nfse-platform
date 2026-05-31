@@ -27,7 +27,8 @@ testes alinhados ao framework.
 
 O que torna o projeto senior nao e a quantidade de endpoints; e a combinacao de
 decisoes: fronteiras transacionais claras, idempotencia, optimistic locking,
-row locking onde importa, outbox, evidencia fiscal versionavel, seguranca por
+row locking onde importa, outbox com claim transacional, evidencia fiscal
+versionavel, contratos de evento testados, paginacao limitada, seguranca por
 camadas, testes de falha, CI, Docker, OpenAPI, runbooks e documentacao de
 trade-offs.
 
@@ -93,7 +94,9 @@ Depois do bootstrap, os primeiros arquivos manuais deveriam ser:
   Centraliza actor, tenant, request id e correlation id.
 - `app/services/security/`: autenticacao por token, autorizacao e rate limit.
   Isola seguranca de controllers.
-- `app/services/invoices/`: casos de uso transacionais do dominio fiscal.
+- `app/services/invoices/`, `app/services/customers/` e
+  `app/services/fiscal_profiles/`: casos de uso transacionais do dominio e dos
+  cadastros operacionais.
   Evita fat models e controllers com regra de negocio.
 - `app/services/providers/`: adapter do provedor NFS-e sandbox. Preserva a
   fronteira para provedores reais.
@@ -143,10 +146,11 @@ validation.
 ### Fase 4 - Casos de uso/services
 
 Foram implementados `Invoices::Create`, `Issue`, `Cancel`, `PollStatus`,
-`ApplyIssueResult`, `ApplyCancellationResult`, provider sandbox, auditoria e
-outbox.
+`ApplyIssueResult`, `ApplyCancellationResult`, services transacionais para
+clientes/perfis fiscais, provider sandbox, auditoria e outbox.
 
-Arquivos: `app/services/invoices/*`, `app/services/providers/*`,
+Arquivos: `app/services/invoices/*`, `app/services/customers/*`,
+`app/services/fiscal_profiles/*`, `app/services/providers/*`,
 `app/services/auditing/*`, `app/services/events/*`.
 
 Decisao: services transacionais para mutacoes. Alternativa: callbacks em models;

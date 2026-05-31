@@ -8,6 +8,14 @@ FiscalBridge needs the Rails web/API process, Solid Queue workers, PostgreSQL, s
 - PostgreSQL-backed application, queue, cache, cable, session, and storage metadata.
 - Health, readiness, metrics, traces, and structured logs.
 - Provider sandbox adapter for deterministic local behavior.
+- Transactional outbox workers with a local log delivery adapter by default.
+- Bounded API pagination for registry and invoice list endpoints.
+
+## Self-contained runtime knobs
+
+- `OUTBOUND_EVENT_DELIVERY_ADAPTER=log` is the default. It records delivery metadata to structured logs without sending customer or fiscal payload bodies to an external system.
+- Any unsupported delivery adapter fails the outbox attempt and records retry metadata instead of marking the event dispatched.
+- Real webhook delivery is intentionally deferred until a target downstream contract, signing scheme, and retry/SLA policy exist.
 
 ## Deferred platform work
 

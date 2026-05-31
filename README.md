@@ -24,6 +24,7 @@ Fiscal operations are consistency-sensitive: duplicate issue requests can create
 - fiscal profile registry for issuer legal identity and municipal configuration
 - customer registry with CPF/CNPJ normalization
 - idempotent service invoice creation via `Idempotency-Key`
+- bounded cursor pagination on registry and invoice list endpoints
 - optimistic-lock protected issue, cancel, and provider status polling commands
 - sandbox NFS-e provider adapter with success, rejection, timeout, and cancellation paths
 - provider callback endpoint protected by `X-Provider-Token`, with fail-closed production configuration
@@ -95,7 +96,7 @@ Primary endpoints:
 
 ## 9. Async or event architecture
 
-Mutating services write the database record, audit log, and outbox event in one transaction. Jobs are enqueued only after commit. Issuance, cancellation, and status polling use ActiveJob workers backed by Solid Queue and the `Providers::SandboxNfseClient` adapter. Provider callbacks are idempotent through the callback id stored as a provider request idempotency key. Outbox delivery failures persist retry metadata and enqueue the next attempt, with a recurring sweeper for due pending events.
+Mutating services write the database record, audit log, and outbox event in one transaction. Jobs are enqueued only after commit. Issuance, cancellation, and status polling use ActiveJob workers backed by Solid Queue and the `Providers::SandboxNfseClient` adapter. Provider callbacks are idempotent through the callback id stored as a provider request idempotency key. Outbox dispatch claims events inside a database transaction, skips active in-flight work, recovers stale `processing` events through the recurring sweeper, and uses a local log delivery adapter by default so the repo remains self-contained without silently pretending to call an external webhook.
 
 Supported domain events include `service_invoice.created`, `service_invoice.issue_requested`, `service_invoice.issued`, `service_invoice.rejected`, `service_invoice.cancel_requested`, `service_invoice.cancelled`, `service_invoice.cancellation_failed`, `service_invoice.status_polled`, and `service_invoice.provider_timeout`. Versioning and compatibility rules are documented in [docs/events/README.md](docs/events/README.md).
 
@@ -215,6 +216,7 @@ The full CI workflow is defined in [`.github/workflows/ci.yml`](.github/workflow
 - duplicate provider callback is accepted without duplicating provider request evidence
 - invalid provider callback status is rejected before evidence is written
 - missing production provider callback token fails closed instead of using local defaults
+- unsupported outbound delivery adapter fails the event into retry instead of marking it dispatched
 - unsupported outbound events are marked `failed` with `last_error`
 - invalid browser credentials keep the operator out of the backoffice
 - repeated browser login attempts are rate limited

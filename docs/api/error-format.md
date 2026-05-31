@@ -27,6 +27,7 @@ Known error codes:
 - `invalid_transition`
 - `precondition_required`
 - `precondition_failed`
+- `invalid_cursor`
 - `validation_failed`
 - `rate_limited`
 
