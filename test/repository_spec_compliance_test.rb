@@ -58,6 +58,7 @@ class RepositorySpecComplianceTest < ActiveSupport::TestCase
     test/services/mutation_transaction_boundaries_test.rb
     test/services/security_authorizer_test.rb
     test/services/invoice_sequence_test.rb
+    test/services/events_publisher_contract_test.rb
     test/services/provider_adapter_contract_test.rb
     test/system/backoffice_authentication_test.rb
     test/system/backoffice_service_invoices_test.rb
@@ -199,6 +200,16 @@ class RepositorySpecComplianceTest < ActiveSupport::TestCase
 
     assert_includes application_config, "config.active_job.queue_adapter = :solid_queue"
     assert_includes application_config, "config.cache_store = :solid_cache_store"
+  end
+
+  test "keeps durable outbox production mechanics executable" do
+    migration = read_file("db/migrate/20260529100000_create_fiscalbridge_core.rb")
+    recurring = read_file("config/recurring.yml")
+    dispatch_job = read_file("app/jobs/outbound_event_dispatch_job.rb")
+
+    assert_includes migration, "t.bigint :aggregate_id"
+    assert_includes recurring, "DispatchDueOutboundEventsJob"
+    assert_includes dispatch_job, "set(wait_until: event.next_attempt_at).perform_later(event.id)"
   end
 
   test "keeps security observability and data consistency artifacts" do

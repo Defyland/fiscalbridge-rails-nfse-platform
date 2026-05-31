@@ -78,4 +78,37 @@ class ServiceInvoicesFlowTest < ActionDispatch::IntegrationTest
     assert_equal "cancelled", json_response.dig("service_invoice", "status")
     assert_not_nil json_response.dig("service_invoice", "cancelled_at")
   end
+
+  test "lists service invoices through bounded cursor pagination" do
+    bootstrap = bootstrap_organization(slug: unique_slug("invoice-pagination"))
+    token = bootstrap.dig("owner", "api_token")
+    profile = create_fiscal_profile(token: token)
+    customer = create_customer(token: token)
+
+    3.times do |index|
+      create_service_invoice(
+        token: token,
+        fiscal_profile_id: profile.fetch("id"),
+        customer_id: customer.fetch("id"),
+        idempotency_key: "invoice-pagination-#{index}",
+        attributes: { service_description: "Invoice page #{index}" }
+      )
+    end
+
+    get "/v1/service_invoices", params: { limit: 2 }, headers: auth_headers(token)
+
+    assert_response :success
+    first_page = json_response
+    assert_equal 2, first_page.fetch("service_invoices").size
+    assert_equal 2, first_page.dig("pagination", "limit")
+    assert first_page.dig("pagination", "next_cursor").present?
+
+    get "/v1/service_invoices",
+        params: { limit: 2, cursor: first_page.dig("pagination", "next_cursor") },
+        headers: auth_headers(token)
+
+    assert_response :success
+    assert_equal 1, json_response.fetch("service_invoices").size
+    assert_nil json_response.dig("pagination", "next_cursor")
+  end
 end

@@ -19,6 +19,10 @@ The project now handles the practical hardening that fits this repository:
   `lock_version` values;
 - provider-returned fiscal artifacts attached through Active Storage with
   SHA-256 verification and digest persistence on `service_invoices`.
+- transactional outbox retries that persist the next attempt, enqueue delayed
+  retries, and sweep due pending events.
+- provider callbacks that fail closed in production when the shared callback
+  token is not configured.
 
 The remaining production gaps are not accidental. They need real operational
 inputs: legal provider credentials, certificate strategy, fraud/risk appetite,

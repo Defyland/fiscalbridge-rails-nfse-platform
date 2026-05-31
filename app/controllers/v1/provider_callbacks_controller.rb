@@ -1,5 +1,9 @@
 module V1
   class ProviderCallbacksController < ActionController::API
+    MissingProviderCallbackToken = Class.new(StandardError)
+    InvalidProviderCallback = Class.new(StandardError)
+    SUPPORTED_STATUSES = %w[issued cancelled].freeze
+
     before_action :verify_provider_token!
     after_action :set_observability_headers
 
@@ -9,6 +13,20 @@ module V1
 
     rescue_from ActiveRecord::RecordNotFound do
       render json: { error: { code: "not_found", message: "Provider invoice was not found." } }, status: :not_found
+    end
+
+    rescue_from MissingProviderCallbackToken do
+      render json: {
+        error: {
+          code: "provider_callback_token_not_configured",
+          message: "Provider callback token is not configured."
+        }
+      }, status: :service_unavailable
+    end
+
+    rescue_from InvalidProviderCallback do |error|
+      render json: { error: { code: "invalid_provider_callback", message: error.message } },
+             status: :unprocessable_entity
     end
 
     def nfse
@@ -35,16 +53,28 @@ module V1
         raise ActionController::ParameterMissing, key if payload[key].blank?
       end
 
+      unless SUPPORTED_STATUSES.include?(payload.fetch(:status))
+        raise InvalidProviderCallback, "Unsupported provider callback status #{payload.fetch(:status)}."
+      end
+
       payload
     end
 
     def verify_provider_token!
-      expected = ENV.fetch("PROVIDER_CALLBACK_TOKEN", "local-provider-token")
+      expected = provider_callback_token
       token = request.headers["X-Provider-Token"].to_s
       return if token.bytesize == expected.bytesize && ActiveSupport::SecurityUtils.secure_compare(token, expected)
 
       render json: { error: { code: "unauthorized", message: "Invalid provider callback token." } },
              status: :unauthorized
+    end
+
+    def provider_callback_token
+      configured_token = ENV["PROVIDER_CALLBACK_TOKEN"].presence
+      return configured_token if configured_token.present?
+      return "local-provider-token" unless Rails.env.production?
+
+      raise MissingProviderCallbackToken
     end
 
     def set_observability_headers

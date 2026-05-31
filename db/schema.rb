@@ -93,7 +93,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_29_164000) do
     t.index ["organization_id", "default_profile"], name: "index_fiscal_profiles_on_organization_id_and_default_profile"
     t.index ["organization_id", "tax_id"], name: "index_fiscal_profiles_on_organization_id_and_tax_id", unique: true
     t.index ["organization_id"], name: "index_fiscal_profiles_on_organization_id"
-    t.check_constraint "environment::text = ANY (ARRAY['sandbox'::character varying::text, 'production'::character varying::text])", name: "fiscal_profiles_environment_valid"
+    t.check_constraint "environment::text = ANY (ARRAY['sandbox'::character varying::text, 'homologation'::character varying::text, 'production'::character varying::text])", name: "fiscal_profiles_environment_valid"
     t.check_constraint "taxation_regime::text = ANY (ARRAY['simples_nacional'::character varying::text, 'lucro_presumido'::character varying::text, 'lucro_real'::character varying::text])", name: "fiscal_profiles_taxation_regime_valid"
   end
 
@@ -146,7 +146,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_29_164000) do
   end
 
   create_table "outbound_events", force: :cascade do |t|
-    t.integer "aggregate_id", null: false
+    t.bigint "aggregate_id", null: false
     t.string "aggregate_type", null: false
     t.integer "attempts_count", default: 0, null: false
     t.string "correlation_id", null: false

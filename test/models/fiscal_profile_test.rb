@@ -16,4 +16,20 @@ class FiscalProfileTest < ActiveSupport::TestCase
     assert_equal "11222333000181", profile.tax_id
     assert profile.valid?
   end
+
+  test "supports explicit homologation environment" do
+    organization = Organization.create!(name: "Homologation Tenant", slug: unique_slug("homologation"))
+
+    profile = organization.fiscal_profiles.create!(
+      legal_name: "Acme Homologacao Ltda",
+      tax_id: "11222333000181",
+      municipal_registration: "123456",
+      city_code: "3550308",
+      service_list_item: "01.07",
+      taxation_regime: "simples_nacional",
+      environment: "homologation"
+    )
+
+    assert profile.homologation?
+  end
 end

@@ -4,11 +4,22 @@ module V1
       authorize!(:service_invoices_list)
 
       invoices = current_organization.service_invoices.includes(:fiscal_profile, :customer, :created_by_membership)
-                                      .recent_first
+                                      .order(created_at: :desc, id: :desc)
       invoices = invoices.where(status: params[:status]) if params[:status].present?
       invoices = invoices.where(customer_id: params[:customer_id]) if params[:customer_id].present?
+      invoices = apply_cursor(invoices)
+      limit = page_size
+      page = invoices.limit(limit + 1).to_a
+      next_cursor = page.length > limit ? page[limit - 1].public_id : nil
+      page = page.first(limit)
 
-      render json: { service_invoices: invoices.map(&:as_api_json) }
+      render json: {
+        service_invoices: page.map(&:as_api_json),
+        pagination: {
+          limit: limit,
+          next_cursor: next_cursor
+        }
+      }
     end
 
     def create
@@ -98,6 +109,18 @@ module V1
     def scoped_invoice
       current_organization.service_invoices.includes(:fiscal_profile, :customer, :created_by_membership)
                           .find_by!(public_id: params[:id])
+    end
+
+    def apply_cursor(invoices)
+      return invoices if params[:cursor].blank?
+
+      cursor_invoice = current_organization.service_invoices.find_by!(public_id: params[:cursor])
+      invoices.where(
+        "service_invoices.created_at < ? OR (service_invoices.created_at = ? AND service_invoices.id < ?)",
+        cursor_invoice.created_at,
+        cursor_invoice.created_at,
+        cursor_invoice.id
+      )
     end
 
     def service_invoice_params

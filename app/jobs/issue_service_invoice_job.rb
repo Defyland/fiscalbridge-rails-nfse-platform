@@ -5,7 +5,7 @@ class IssueServiceInvoiceJob < ApplicationJob
     invoice = ServiceInvoice.find(service_invoice_id)
     return unless invoice.pending_issue?
 
-    provider_request = invoice.provider_requests.issue.pending.recent_first.first
+    provider_request = invoice.provider_requests.issue.where(status: %w[pending failed]).recent_first.first
     return if provider_request.nil?
 
     result = Providers::SandboxNfseClient.issue(

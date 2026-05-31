@@ -96,10 +96,13 @@ Example envelope:
 
 ## Delivery semantics
 
-FiscalBridge stores events in `outbound_events` inside the same transaction as
-the corresponding state transition. Delivery to downstream systems is
-asynchronous and at-least-once. Consumers must be idempotent and should store the
-last processed `event_id` or a provider-specific idempotency key.
+FiscalBridge stores fiscal lifecycle events in `outbound_events` inside the same
+transaction as the corresponding state transition. For `service_invoice.*`
+events, `outbound_events.payload` is the versioned external envelope documented
+above. Delivery is asynchronous and at-least-once: failed delivery attempts store
+`next_attempt_at`, enqueue the next retry, and are also covered by a recurring
+due-event sweeper. Consumers must be idempotent and should store the last
+processed `event_id` or a provider-specific idempotency key.
 
 ## Versioned schemas
 

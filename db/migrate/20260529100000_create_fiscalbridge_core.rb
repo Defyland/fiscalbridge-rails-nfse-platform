@@ -71,7 +71,7 @@ class CreateFiscalbridgeCore < ActiveRecord::Migration[8.1]
     add_index :fiscal_profiles, [ :organization_id, :default_profile ]
     add_check_constraint :fiscal_profiles, "taxation_regime IN ('simples_nacional', 'lucro_presumido', 'lucro_real')",
                          name: "fiscal_profiles_taxation_regime_valid"
-    add_check_constraint :fiscal_profiles, "environment IN ('sandbox', 'production')",
+    add_check_constraint :fiscal_profiles, "environment IN ('sandbox', 'homologation', 'production')",
                          name: "fiscal_profiles_environment_valid"
 
     create_table :customers do |t|
@@ -172,7 +172,7 @@ class CreateFiscalbridgeCore < ActiveRecord::Migration[8.1]
     create_table :outbound_events do |t|
       t.references :organization, null: false, foreign_key: true
       t.string :aggregate_type, null: false
-      t.integer :aggregate_id, null: false
+      t.bigint :aggregate_id, null: false
       t.string :event_type, null: false
       t.json :payload, null: false, default: {}
       t.string :idempotency_key, null: false

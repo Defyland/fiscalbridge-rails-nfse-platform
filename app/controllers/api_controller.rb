@@ -1,4 +1,7 @@
 class ApiController < ActionController::API
+  DEFAULT_PAGE_SIZE = 50
+  MAX_PAGE_SIZE = 100
+
   before_action :enforce_rate_limit!
   before_action :authenticate_membership!
   after_action :set_observability_headers
@@ -144,6 +147,14 @@ class ApiController < ActionController::API
 
   def set_lock_etag(record)
     response.set_header("ETag", %("#{record.lock_version}")) if record.respond_to?(:lock_version)
+  end
+
+  def page_size(default: DEFAULT_PAGE_SIZE, max: MAX_PAGE_SIZE)
+    raw_limit = params.fetch(:limit, default)
+    limit = Integer(raw_limit, 10)
+    limit.clamp(1, max)
+  rescue ArgumentError
+    default
   end
 
   def enforce_rate_limit!

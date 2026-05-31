@@ -11,6 +11,7 @@ class FiscalProfile < ApplicationRecord
 
   enum :environment, {
     sandbox: "sandbox",
+    homologation: "homologation",
     production: "production"
   }, validate: true
 

@@ -26,7 +26,7 @@ Fiscal operations are consistency-sensitive: duplicate issue requests can create
 - idempotent service invoice creation via `Idempotency-Key`
 - optimistic-lock protected issue, cancel, and provider status polling commands
 - sandbox NFS-e provider adapter with success, rejection, timeout, and cancellation paths
-- provider callback endpoint protected by `X-Provider-Token`
+- provider callback endpoint protected by `X-Provider-Token`, with fail-closed production configuration
 - ERB/Hotwire backoffice for dashboard, invoice lifecycle inspection, provider evidence, memberships, fiscal profiles, and customers
 - Rails-style web auth with `User`, `Session`, signed cookies, `bcrypt`, and tenant role reuse through `Membership`
 - Solid Queue, Solid Cache, and Solid Cable on PostgreSQL instead of Redis/Sidekiq
@@ -95,7 +95,7 @@ Primary endpoints:
 
 ## 9. Async or event architecture
 
-Mutating services write the database record, audit log, and outbox event in one transaction. Jobs are enqueued only after commit. Issuance, cancellation, and status polling use ActiveJob workers backed by Solid Queue and the `Providers::SandboxNfseClient` adapter. Provider callbacks are idempotent through the callback id stored as a provider request idempotency key.
+Mutating services write the database record, audit log, and outbox event in one transaction. Jobs are enqueued only after commit. Issuance, cancellation, and status polling use ActiveJob workers backed by Solid Queue and the `Providers::SandboxNfseClient` adapter. Provider callbacks are idempotent through the callback id stored as a provider request idempotency key. Outbox delivery failures persist retry metadata and enqueue the next attempt, with a recurring sweeper for due pending events.
 
 Supported domain events include `service_invoice.created`, `service_invoice.issue_requested`, `service_invoice.issued`, `service_invoice.rejected`, `service_invoice.cancel_requested`, `service_invoice.cancelled`, `service_invoice.cancellation_failed`, `service_invoice.status_polled`, and `service_invoice.provider_timeout`. Versioning and compatibility rules are documented in [docs/events/README.md](docs/events/README.md).
 
@@ -192,6 +192,7 @@ Run `bin/jobs` in a second process when you want Solid Queue jobs to be processe
 
 ```sh
 bin/rails test
+TEST_WORKERS=10 bin/rails test
 bin/rails test:system
 SYSTEM_TEST_DRIVER=selenium bin/rails test:system
 bin/rubocop
@@ -210,8 +211,10 @@ The full CI workflow is defined in [`.github/workflows/ci.yml`](.github/workflow
 - stale `If-Match` returns `409`
 - stale backoffice invoice actions are rejected instead of applying the newest server-side lock implicitly
 - invoice quota exhaustion returns `422`
-- provider timeout leaves the invoice in `pending_issue` with failed provider evidence for reprocessing
+- provider timeout leaves the invoice in `pending_issue` with failed provider evidence and can be retried with the same provider idempotency key
 - duplicate provider callback is accepted without duplicating provider request evidence
+- invalid provider callback status is rejected before evidence is written
+- missing production provider callback token fails closed instead of using local defaults
 - unsupported outbound events are marked `failed` with `last_error`
 - invalid browser credentials keep the operator out of the backoffice
 - repeated browser login attempts are rate limited

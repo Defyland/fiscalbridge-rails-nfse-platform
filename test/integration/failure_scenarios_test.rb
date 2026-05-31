@@ -73,6 +73,13 @@ class FailureScenariosTest < ActionDispatch::IntegrationTest
     assert_equal "pending_issue", invoice.status
     assert_equal "failed", invoice.provider_requests.issue.last.status
     assert AuditLog.exists?(action: "service_invoice.provider_timeout")
+
+    invoice.update!(service_description: "Software implementation after provider recovery")
+
+    IssueServiceInvoiceJob.perform_now(invoice.id)
+
+    assert_equal "issued", invoice.reload.status
+    assert_equal "succeeded", invoice.provider_requests.issue.last.status
   end
 
   test "duplicate provider callbacks are accepted idempotently" do
@@ -92,5 +99,41 @@ class FailureScenariosTest < ActionDispatch::IntegrationTest
     end
 
     assert_equal 1, invoice.provider_requests.callback.where(idempotency_key: "callback-123").count
+  end
+
+  test "provider callback endpoint fails closed in production when token is not configured" do
+    previous_token = ENV.delete("PROVIDER_CALLBACK_TOKEN")
+    invoice = create_invoice_record(status: "issued")
+
+    with_stubbed_singleton(Rails, :env, -> { ActiveSupport::StringInquirer.new("production") }) do
+      post "/v1/provider_callbacks/nfse", params: {
+        callback: {
+          callback_id: "callback-missing-token",
+          provider_invoice_number: invoice.provider_invoice_number,
+          status: "issued"
+        }
+      }, headers: { "X-Provider-Token" => "local-provider-token" }, as: :json
+    end
+
+    assert_response :service_unavailable
+    assert_equal "provider_callback_token_not_configured", json_response.dig("error", "code")
+  ensure
+    ENV["PROVIDER_CALLBACK_TOKEN"] = previous_token if previous_token
+  end
+
+  test "provider callback rejects unsupported statuses before writing evidence" do
+    invoice = create_invoice_record(status: "issued")
+
+    post "/v1/provider_callbacks/nfse", params: {
+      callback: {
+        callback_id: "callback-invalid-status",
+        provider_invoice_number: invoice.provider_invoice_number,
+        status: "paid"
+      }
+    }, headers: { "X-Provider-Token" => "local-provider-token" }, as: :json
+
+    assert_response :unprocessable_entity
+    assert_equal "invalid_provider_callback", json_response.dig("error", "code")
+    assert_not ProviderRequest.exists?(idempotency_key: "callback-invalid-status")
   end
 end

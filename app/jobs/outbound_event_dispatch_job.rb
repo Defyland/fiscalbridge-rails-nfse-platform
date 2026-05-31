@@ -66,7 +66,6 @@ class OutboundEventDispatchJob < ApplicationJob
     raise
   rescue StandardError => error
     schedule_retry_or_failure(outbound_event_id, error)
-    raise
   end
 
   def self.deliver(_event)
@@ -101,14 +100,18 @@ class OutboundEventDispatchJob < ApplicationJob
     attempts_count = [ event.attempts_count, 1 ].max
     final_failure = attempts_count >= MAX_ATTEMPTS
 
+    next_attempt_at = final_failure ? nil : retry_at(attempts_count)
+
     event.update_columns(
       status: final_failure ? "failed" : "pending",
       attempts_count: attempts_count,
       last_error: error.message,
       processing_started_at: nil,
-      next_attempt_at: final_failure ? nil : retry_at(attempts_count),
+      next_attempt_at: next_attempt_at,
       updated_at: Time.current
     )
+
+    self.class.set(wait_until: event.next_attempt_at).perform_later(event.id) unless final_failure
 
     Observability::MetricsRegistry.record_outbound(
       event_type: event.event_type,

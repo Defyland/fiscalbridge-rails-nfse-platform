@@ -311,6 +311,8 @@ paths:
           in: query
           schema:
             $ref: "#/components/schemas/ServiceInvoiceStatus"
+        - $ref: "#/components/parameters/PageLimit"
+        - $ref: "#/components/parameters/PageCursor"
       responses:
         "200":
           description: Service invoice list
@@ -318,12 +320,14 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [service_invoices]
+                required: [service_invoices, pagination]
                 properties:
                   service_invoices:
                     type: array
                     items:
                       $ref: "#/components/schemas/ServiceInvoice"
+                  pagination:
+                    $ref: "#/components/schemas/CursorPagination"
         "403":
           $ref: "#/components/responses/Forbidden"
     post:
@@ -472,6 +476,10 @@ paths:
           description: Callback accepted idempotently
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/ValidationFailed"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
 components:
   securitySchemes:
     BearerAuth:
@@ -501,6 +509,21 @@ components:
       name: If-Match
       in: header
       required: true
+      schema:
+        type: string
+    PageLimit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+    PageCursor:
+      name: cursor
+      in: query
+      required: false
       schema:
         type: string
   responses:
@@ -556,7 +579,23 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorEnvelope"
+    ServiceUnavailable:
+      description: Required server-side integration configuration is missing.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
   schemas:
+    CursorPagination:
+      type: object
+      required: [limit]
+      properties:
+        limit:
+          type: integer
+        next_cursor:
+          type:
+            - string
+            - "null"
     OrganizationCreate:
       type: object
       required: [name, slug]
@@ -670,7 +709,7 @@ components:
           enum: [simples_nacional, lucro_presumido, lucro_real]
         environment:
           type: string
-          enum: [sandbox, production]
+          enum: [sandbox, homologation, production]
         default_profile:
           type: boolean
     FiscalProfile:
