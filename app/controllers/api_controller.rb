@@ -157,6 +157,33 @@ class ApiController < ActionController::API
     default
   end
 
+  def bounded_page(relation, cursor_column: :id)
+    cursor = numeric_cursor
+    return if performed?
+
+    relation = relation.where(relation.klass.arel_table[cursor_column].gt(cursor)) if cursor.present?
+    limit = page_size
+    records = relation.limit(limit + 1).to_a
+    page = records.first(limit)
+    next_cursor = records.length > limit ? page.last.public_send(cursor_column).to_s : nil
+
+    [ page, { limit: limit, next_cursor: next_cursor } ]
+  end
+
+  def numeric_cursor
+    raw_cursor = params[:cursor].to_s.strip
+    return if raw_cursor.blank?
+
+    Integer(raw_cursor, 10)
+  rescue ArgumentError
+    render_error(
+      code: "invalid_cursor",
+      message: "Cursor must be a numeric id for this endpoint.",
+      status: :bad_request
+    )
+    nil
+  end
+
   def enforce_rate_limit!
     Security::RateLimiter.check!(rate_limit_key)
   end

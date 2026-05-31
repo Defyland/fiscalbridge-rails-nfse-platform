@@ -2,11 +2,14 @@ module V1
   class MembershipsController < ApiController
     def index
       authorize!(:memberships_list)
+      memberships, pagination = bounded_page(current_organization.memberships.order(id: :asc))
+      return if performed?
 
       render json: {
-        memberships: current_organization.memberships.ordered.map do |membership|
+        memberships: memberships.map do |membership|
           membership.as_api_json(include_private: true)
-        end
+        end,
+        pagination: pagination
       }
     end
 
