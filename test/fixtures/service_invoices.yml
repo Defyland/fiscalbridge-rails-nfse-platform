@@ -1,0 +1,16 @@
+draft_invoice:
+  organization: acme
+  fiscal_profile: acme_default
+  customer: acme_customer
+  created_by_membership: owner
+  public_id: NFS-000001
+  idempotency_key: fixture-draft-invoice
+  status: draft
+  service_description: Servicos de implantacao e suporte
+  service_code: "6201501"
+  amount_cents: 25000
+  tax_rate_bps: 200
+  iss_withheld: false
+  lock_version: 0
+  created_at: <%= 1.day.ago %>
+  updated_at: <%= 1.day.ago %>

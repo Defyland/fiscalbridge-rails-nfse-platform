@@ -1,0 +1,50 @@
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Notas fiscais</h1>
+    <p class="page-subtitle">Consulta operacional por tenant, status e evidencia de provider.</p>
+  </div>
+</div>
+
+<%= form_with url: backoffice_service_invoices_path, method: :get, class: "filters", data: { controller: "filters" } do |form| %>
+  <div class="field">
+    <%= form.label :status, "Status" %>
+    <%= form.select :status,
+                    options_for_select([ [ "Todos", "" ] ] + ServiceInvoice.statuses.keys.map { |status| [ status, status ] }, @status),
+                    {},
+                    data: { action: "change->filters#submit" } %>
+  </div>
+  <%= form.submit "Filtrar", class: "secondary" %>
+<% end %>
+
+<div class="panel table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Nota</th>
+        <th>Status</th>
+        <th>Cliente</th>
+        <th>Perfil fiscal</th>
+        <th>Valor</th>
+        <th>Criada em</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @service_invoices.each do |invoice| %>
+        <tr>
+          <td><%= link_to invoice.public_id, backoffice_service_invoice_path(invoice.public_id), class: "mono" %></td>
+          <td><span class="badge <%= status_badge_class(invoice.status) %>"><%= invoice.status %></span></td>
+          <td><%= invoice.customer.legal_name %></td>
+          <td><%= invoice.fiscal_profile.legal_name %></td>
+          <td><%= money_from_cents(invoice.amount_cents) %></td>
+          <td><%= local_time(invoice.created_at) %></td>
+        </tr>
+      <% end %>
+
+      <% if @service_invoices.empty? %>
+        <tr>
+          <td colspan="6" class="muted">Nenhuma nota encontrada para o filtro atual.</td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

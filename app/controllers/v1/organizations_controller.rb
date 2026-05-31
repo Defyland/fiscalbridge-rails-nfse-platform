@@ -1,5 +1,5 @@
 module V1
-  class OrganizationsController < ApplicationController
+  class OrganizationsController < ApiController
     skip_before_action :authenticate_membership!, only: :create
 
     def create

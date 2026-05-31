@@ -8,7 +8,11 @@ class IssueServiceInvoiceJob < ApplicationJob
     provider_request = invoice.provider_requests.issue.pending.recent_first.first
     return if provider_request.nil?
 
-    result = Providers::SandboxNfseClient.issue(invoice)
+    result = Providers::SandboxNfseClient.issue(
+      invoice,
+      idempotency_key: provider_request.idempotency_key,
+      environment: invoice.fiscal_profile.environment
+    )
     Invoices::ApplyIssueResult.call!(
       invoice: invoice,
       provider_request: provider_request,

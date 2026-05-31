@@ -1,4 +1,19 @@
 Rails.application.routes.draw do
+  root "dashboard#show"
+  resource :session, only: %i[new create destroy]
+  get "/dashboard", to: "dashboard#show"
+
+  namespace :backoffice do
+    resources :service_invoices, only: %i[index show] do
+      post :issue, on: :member
+      post :cancel, on: :member
+      post :poll_status, on: :member
+    end
+    resources :customers, only: :index
+    resources :fiscal_profiles, only: :index
+    resources :memberships, only: :index
+  end
+
   get "/up", to: "platform#live"
   get "/ready", to: "platform#ready"
   get "/metrics", to: "platform#metrics"

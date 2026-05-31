@@ -47,11 +47,15 @@
 
 ## Optimistic locking
 
-`service_invoices.lock_version` is exposed through `ETag` on reads and writes. Issue, cancel, and status poll commands require `If-Match`. A stale client receives `409 conflict` through `Invoices::InvalidTransition`.
+`service_invoices.lock_version` is exposed through `ETag` on API reads and writes. API issue, cancel, and status poll commands require `If-Match`. Backoffice issue, cancel, and status poll forms submit the `lock_version` rendered to the operator. A stale client receives `409 conflict` through `Invoices::InvalidTransition`; a stale operator action is rejected before changing invoice state.
+
+## Fiscal evidence integrity
+
+Provider issue results include XML/PDF artifact bytes and SHA-256 digests. `Invoices::ApplyIssueResult` verifies the digest before attaching artifacts through Active Storage. Provider request response payloads keep digests and metadata, not raw artifact bodies.
 
 ## Isolation assumptions
 
-The production path assumes PostgreSQL read committed isolation plus explicit organization row locks for invoice sequence allocation and quota enforcement. The SQLite fallback is for isolated local demos, not concurrency validation.
+The production path assumes PostgreSQL read committed isolation plus explicit organization row locks for invoice sequence allocation and quota enforcement. PostgreSQL is now the only supported runtime database.
 
 ## Migration strategy
 

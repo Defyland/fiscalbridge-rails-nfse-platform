@@ -1,5 +1,6 @@
 class Membership < ApplicationRecord
   belongs_to :organization
+  has_one :user, dependent: :destroy
   has_many :created_service_invoices, class_name: "ServiceInvoice", foreign_key: :created_by_membership_id,
                                       inverse_of: :created_by_membership
   has_many :audit_logs

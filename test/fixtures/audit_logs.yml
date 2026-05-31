@@ -1,0 +1,9 @@
+draft_invoice_created:
+  organization: acme
+  membership: owner
+  auditable: draft_invoice (ServiceInvoice)
+  action: service_invoice.created
+  metadata:
+    invoice_id: NFS-000001
+  created_at: <%= 1.day.ago %>
+  updated_at: <%= 1.day.ago %>

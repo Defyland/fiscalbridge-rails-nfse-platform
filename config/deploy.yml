@@ -1,0 +1,45 @@
+service: fiscalbridge
+image: registry.example.com/fiscalbridge
+
+servers:
+  web:
+    - 192.0.2.10
+  job:
+    hosts:
+      - 192.0.2.10
+    cmd: bundle exec bin/jobs
+
+proxy:
+  ssl: true
+  host: fiscalbridge.example.com
+  app_port: 80
+  healthcheck:
+    path: /up
+
+registry:
+  username: deploy
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+env:
+  clear:
+    RAILS_ENV: production
+    RAILS_LOG_LEVEL: info
+    RAILS_SERVE_STATIC_FILES: true
+    TARGET_PORT: 3000
+    HTTP_PORT: 80
+  secret:
+    - DATABASE_URL
+    - SECRET_KEY_BASE
+    - PROVIDER_CALLBACK_TOKEN
+    - RAILS_MASTER_KEY
+
+builder:
+  arch:
+    - amd64
+    - arm64
+
+volumes:
+  - fiscalbridge_storage:/app/storage
+
+asset_path: /app/public/assets

@@ -7,7 +7,8 @@ Rails.application.configure do
   config.server_timing = false
 
   config.action_controller.perform_caching = false
-  config.cache_store = :memory_store
+  config.cache_store = :solid_cache_store
+  config.active_storage.service = :local
   config.action_mailer.raise_delivery_errors = false
   config.action_mailer.perform_caching = false
   config.action_mailer.default_url_options = { host: "localhost", port: 3000 }
@@ -16,6 +17,6 @@ Rails.application.configure do
   config.active_record.migration_error = :page_load
   config.active_record.verbose_query_logs = false
   config.active_record.query_log_tags_enabled = false
-  config.active_job.queue_adapter = :async
+  config.active_job.queue_adapter = :solid_queue
   config.action_controller.raise_on_missing_callback_actions = true
 end

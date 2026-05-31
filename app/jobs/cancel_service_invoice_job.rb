@@ -8,7 +8,12 @@ class CancelServiceInvoiceJob < ApplicationJob
     provider_request = invoice.provider_requests.cancel.pending.recent_first.first
     return if provider_request.nil?
 
-    result = Providers::SandboxNfseClient.cancel(invoice)
+    result = Providers::SandboxNfseClient.cancel(
+      invoice,
+      idempotency_key: provider_request.idempotency_key,
+      reason: invoice.cancellation_reason,
+      environment: invoice.fiscal_profile.environment
+    )
     Invoices::ApplyCancellationResult.call!(
       invoice: invoice,
       provider_request: provider_request,

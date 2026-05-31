@@ -1,0 +1,17 @@
+owner_session:
+  user: owner_user
+  ip_address: 127.0.0.1
+  user_agent: fixture-agent
+  expires_at: <%= 12.hours.from_now %>
+  last_seen_at: <%= 5.minutes.ago %>
+  created_at: <%= 1.hour.ago %>
+  updated_at: <%= 5.minutes.ago %>
+
+expired_owner_session:
+  user: owner_user
+  ip_address: 127.0.0.1
+  user_agent: fixture-agent
+  expires_at: <%= 1.minute.ago %>
+  last_seen_at: <%= 13.hours.ago %>
+  created_at: <%= 13.hours.ago %>
+  updated_at: <%= 13.hours.ago %>

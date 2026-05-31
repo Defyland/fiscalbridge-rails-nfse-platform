@@ -1,5 +1,5 @@
 module V1
-  class FiscalProfilesController < ApplicationController
+  class FiscalProfilesController < ApiController
     def index
       authorize!(:fiscal_profiles_list)
 

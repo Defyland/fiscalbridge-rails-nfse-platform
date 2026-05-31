@@ -32,7 +32,10 @@ class RepositorySpecComplianceTest < ActiveSupport::TestCase
     docs/benchmarks
     docs/api
     docs/diagrams
+    docs/events
+    docs/implementation
     docs/runbooks
+    docs/security
   ].freeze
 
   REQUIRED_TEST_FILES = %w[
@@ -41,6 +44,7 @@ class RepositorySpecComplianceTest < ActiveSupport::TestCase
     test/models/fiscal_profile_test.rb
     test/models/customer_test.rb
     test/models/service_invoice_test.rb
+    test/models/session_test.rb
     test/models/provider_request_test.rb
     test/integration/organizations_flow_test.rb
     test/integration/service_invoices_flow_test.rb
@@ -54,6 +58,9 @@ class RepositorySpecComplianceTest < ActiveSupport::TestCase
     test/services/mutation_transaction_boundaries_test.rb
     test/services/security_authorizer_test.rb
     test/services/invoice_sequence_test.rb
+    test/services/provider_adapter_contract_test.rb
+    test/system/backoffice_authentication_test.rb
+    test/system/backoffice_service_invoices_test.rb
   ].freeze
 
   REQUIRED_CI_CHECKS = [
@@ -61,6 +68,7 @@ class RepositorySpecComplianceTest < ActiveSupport::TestCase
     "bundle exec bundler-audit check --update",
     "bundle exec brakeman --quiet --no-pager --exit-on-warn --exit-on-error",
     "bin/rails test",
+    "bin/rails test:system",
     "npx @redocly/cli@latest lint openapi.yaml",
     "postgres:16",
     "docker build -t fiscalbridge-ci .",
@@ -69,6 +77,19 @@ class RepositorySpecComplianceTest < ActiveSupport::TestCase
 
   REQUIRED_COMMIT_PATTERN = /\A(?:build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(?:\([^)]+\))?: .+\z/
   REQUIRED_SCENARIOS = %w[smoke load stress spike].freeze
+  REQUIRED_EVENT_ENVELOPE_FIELDS = %w[
+    event_id
+    event_type
+    schema_version
+    occurred_at
+    producer
+    organization_id
+    service_invoice_id
+    correlation_id
+    provider
+    environment
+    payload
+  ].freeze
 
   test "keeps mandatory documentation structure and entrypoint files" do
     REQUIRED_DIRECTORIES.each do |directory|
@@ -79,14 +100,27 @@ class RepositorySpecComplianceTest < ActiveSupport::TestCase
     %w[
       README.md
       openapi.yaml
-      db/schema.sqlite.rb
+      db/schema.rb
       config/authorization_matrix.yml
+      config/deploy.yml
       docs/api/http-examples.md
       docs/api/error-format.md
       docs/benchmarks/methodology.md
       docs/benchmarks/local-baseline.md
       docs/adr/003-postgresql-primary.md
+      docs/adr/004-hybrid-rails-dhh-stack.md
+      docs/adr/005-provider-ports-and-adapters.md
+      docs/architecture/deployment-readiness.md
+      docs/events/README.md
+      docs/events/service_invoice_cancelled.v1.json
+      docs/events/service_invoice_created.v1.json
+      docs/events/service_invoice_issued.v1.json
+      docs/events/service_invoice_rejected.v1.json
+      docs/implementation/dhh-hybrid-migration-plan.md
       docs/runbooks/common-issues.md
+      docs/runbooks/provider-contract-drift.md
+      docs/security/fiscal-threat-model.md
+      docs/security/production-hardening-tradeoffs.md
     ].each { |path| assert_path_exists path }
   end
 
@@ -143,18 +177,28 @@ class RepositorySpecComplianceTest < ActiveSupport::TestCase
     REQUIRED_CI_CHECKS.each { |check| assert_includes workflow, check }
   end
 
-  test "keeps PostgreSQL as primary verified database with SQLite fallback" do
+  test "keeps PostgreSQL as the verified database and Solid as Rails runtime foundation" do
     database_config = read_file("config/database.yml")
+    application_config = read_file("config/application.rb")
+    gemfile = read_file("Gemfile")
     docker_compose = read_file("docker-compose.yml")
     adr = read_file("docs/adr/003-postgresql-primary.md")
+    hybrid_adr = read_file("docs/adr/004-hybrid-rails-dhh-stack.md")
 
     assert_includes database_config, "adapter: postgresql"
-    assert_includes database_config, "DATABASE_ADAPTER"
-    assert_includes database_config, "adapter: sqlite3"
-    assert_includes database_config, "schema_dump: schema.sqlite.rb"
+    assert_includes database_config, "primary:"
     assert_includes database_config, "fiscalbridge_test"
+    refute_includes database_config, "adapter: sqlite3"
     assert_includes docker_compose, "postgres:16"
     assert_includes adr, "PostgreSQL as the default database"
+    assert_includes hybrid_adr, "hybrid Rails monolith"
+
+    %w[solid_queue solid_cache solid_cable propshaft importmap-rails turbo-rails stimulus-rails].each do |gem_name|
+      assert_includes gemfile, gem_name
+    end
+
+    assert_includes application_config, "config.active_job.queue_adapter = :solid_queue"
+    assert_includes application_config, "config.cache_store = :solid_cache_store"
   end
 
   test "keeps security observability and data consistency artifacts" do
@@ -181,6 +225,48 @@ class RepositorySpecComplianceTest < ActiveSupport::TestCase
     ].each { |heading| assert_includes data_consistency, heading }
 
     assert_operator grafana_dashboard.fetch("panels").length, :>, 0
+  end
+
+  test "keeps fiscal provider architecture and event contracts aligned" do
+    provider_adr = read_file("docs/adr/005-provider-ports-and-adapters.md")
+    fiscal_threat_model = read_file("docs/security/fiscal-threat-model.md")
+    event_contracts = read_file("docs/events/README.md")
+    event_schema_paths = Dir[absolute_path("docs/events/*.v1.json")].sort
+
+    %w[issue cancel fetch_status download_xml download_pdf ProviderResult ProviderDocument].each do |term|
+      assert_includes provider_adr, term
+    end
+
+    [
+      "Duplicate issuance",
+      "False callback",
+      "XML/PDF leakage",
+      "Audit log tampering",
+      "Homologation/production"
+    ].each { |term| assert_includes fiscal_threat_model, term }
+
+    REQUIRED_EVENT_ENVELOPE_FIELDS.each { |field| assert_includes event_contracts, "`#{field}`" }
+    assert_operator event_schema_paths.length, :>=, 4
+
+    event_schema_paths.each do |schema_path|
+      schema = JSON.parse(File.read(schema_path))
+      required = schema.fetch("required")
+      properties = schema.fetch("properties")
+      basename = File.basename(schema_path)
+      parts = basename.delete_suffix(".v1.json").split("_")
+      expected_event_type = "#{parts.first(2).join('_')}.#{parts.drop(2).join('_')}"
+
+      REQUIRED_EVENT_ENVELOPE_FIELDS.each do |field|
+        assert_includes required, field, "#{basename} must require #{field}"
+        assert properties.key?(field), "#{basename} must define property #{field}"
+      end
+
+      assert_equal expected_event_type, properties.fetch("event_type").fetch("const")
+      assert_equal 1, properties.fetch("schema_version").fetch("const")
+      assert_equal %w[sandbox homologation production], properties.fetch("environment").fetch("enum")
+      assert_equal false, schema.fetch("additionalProperties")
+      assert_includes event_contracts, basename
+    end
   end
 
   test "keeps benchmark scenarios measured artifacts and required metrics evidence" do

@@ -2,8 +2,8 @@
 
 Environment:
 
-- Ruby 3.3.6
-- Rails 8.1 API mode
+- Ruby 3.4.6
+- Rails 8.1 hybrid mode
 - PostgreSQL 16 through Docker Compose
 - Puma single process
 - k6 scenarios in `benchmarks/`
@@ -15,4 +15,4 @@ Environment:
 | Stress | 24.70ms | 96.80ms | 218.50ms | 108.40 req/s | 0.00% | ramp to 30 VUs; organization row locks preserved invoice sequence; peak `88% CPU`, `112500 KiB` RSS |
 | Spike | 21.30ms | 88.40ms | 201.20ms | 78.90 req/s | 0.00% | spike to 20 VUs; p95 recovered after ramp-down; peak `82% CPU`, `111200 KiB` RSS |
 
-The checked-in `benchmarks/results/*` files preserve representative k6 summaries and resource samples for review.
+The checked-in `benchmarks/results/*` files preserve representative pre-hybrid k6 summaries and resource samples for review. Re-run the scenarios after deployment tuning because Solid Queue/Cache and full-stack middleware change the runtime profile.

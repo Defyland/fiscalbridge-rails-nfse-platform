@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Superseded by ADR 004
 
 ## Context
 
@@ -10,10 +10,10 @@ Portfolio reviewers should be able to run FiscalBridge without first provisionin
 
 ## Decision
 
-The app defaults to PostgreSQL but supports `DATABASE_ADAPTER=sqlite3` for isolated local runs. SQLite uses `db/schema.sqlite.rb` and is not treated as the production consistency model.
+The original decision allowed `DATABASE_ADAPTER=sqlite3` for isolated local runs. ADR 004 supersedes this because the project now targets a production-shaped Rails 8 hybrid monolith with Solid Queue, Solid Cache, Solid Cable, Active Storage, and PostgreSQL as the single runtime database.
 
 ## Consequences
 
-- local demos can run with a single process
-- CI and Docker continue to validate PostgreSQL
-- concurrency tests and docs explicitly call out PostgreSQL as the authoritative path
+- local demos now use Docker Compose with PostgreSQL
+- CI and Docker validate the same database family used in production
+- concurrency tests and docs no longer need a SQLite caveat

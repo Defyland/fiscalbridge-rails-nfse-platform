@@ -1,27 +1,3 @@
-<% use_sqlite = ENV["DATABASE_ADAPTER"] == "sqlite3" %>
-<% if use_sqlite %>
-default: &default
-  adapter: sqlite3
-  max_connections: <%= ENV.fetch("RAILS_MAX_THREADS", 5) %>
-  timeout: 5000
-  schema_dump: schema.sqlite.rb
-
-development:
-  <<: *default
-  database: storage/development.sqlite3
-
-test:
-  <<: *default
-  database: storage/test.sqlite3
-
-benchmark:
-  <<: *default
-  database: storage/benchmark.sqlite3
-
-production:
-  <<: *default
-  database: <%= ENV.fetch("DATABASE_PATH", "storage/production.sqlite3") %>
-<% else %>
 default: &default
   adapter: postgresql
   encoding: unicode
@@ -34,22 +10,25 @@ default: &default
     statement_timeout: <%= ENV.fetch("POSTGRES_STATEMENT_TIMEOUT_MS", 5000) %>
 
 development:
-  <<: *default
-  database: <%= ENV.fetch("POSTGRES_DB", "fiscalbridge_development") %>
+  primary:
+    <<: *default
+    database: <%= ENV.fetch("POSTGRES_DB", "fiscalbridge_development") %>
 
 test:
-  <<: *default
-  database: <%= ENV.fetch("POSTGRES_TEST_DB", "fiscalbridge_test#{ENV['TEST_ENV_NUMBER']}") %>
+  primary:
+    <<: *default
+    database: <%= ENV.fetch("POSTGRES_TEST_DB", "fiscalbridge_test#{ENV['TEST_ENV_NUMBER']}") %>
 
 benchmark:
-  <<: *default
-  database: <%= ENV.fetch("POSTGRES_BENCHMARK_DB", "fiscalbridge_benchmark") %>
+  primary:
+    <<: *default
+    database: <%= ENV.fetch("POSTGRES_BENCHMARK_DB", "fiscalbridge_benchmark") %>
 
 production:
+  primary:
 <% if ENV["DATABASE_URL"] && !ENV["DATABASE_URL"].empty? %>
-  url: <%= ENV["DATABASE_URL"] %>
+    url: <%= ENV["DATABASE_URL"] %>
 <% else %>
-  <<: *default
-  database: <%= ENV.fetch("POSTGRES_PRODUCTION_DB", "fiscalbridge_production") %>
-<% end %>
+    <<: *default
+    database: <%= ENV.fetch("POSTGRES_PRODUCTION_DB", "fiscalbridge_production") %>
 <% end %>

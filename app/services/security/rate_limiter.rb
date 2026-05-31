@@ -1,29 +1,19 @@
+require "digest"
+
 module Security
   class RateLimiter
     WINDOW_SECONDS = 60
 
     @mutex = Mutex.new
-    @requests = Hash.new { |hash, key| hash[key] = [] }
+    @override_namespace = nil
 
     class << self
       def check!(identifier)
-        now = Process.clock_gettime(Process::CLOCK_REALTIME)
-        retry_after = nil
+        now = Time.current.to_i
+        count = increment_counter(cache_key(identifier, now / WINDOW_SECONDS))
+        return if count <= limit
 
-        @mutex.synchronize do
-          bucket = @requests[identifier]
-          bucket.reject! { |timestamp| timestamp <= now - WINDOW_SECONDS }
-
-          if bucket.size >= limit
-            retry_after = (WINDOW_SECONDS - (now - bucket.first)).ceil
-          else
-            bucket << now
-          end
-        end
-
-        return unless retry_after
-
-        raise RateLimitExceeded.new(retry_after: [ retry_after, 1 ].max)
+        raise RateLimitExceeded.new(retry_after: retry_after(now))
       end
 
       def limit
@@ -31,7 +21,35 @@ module Security
       end
 
       def reset!
-        @mutex.synchronize { @requests.clear }
+        @mutex.synchronize do
+          @override_namespace = Rails.env.test? ? "test-#{SecureRandom.hex(8)}" : nil
+        end
+      end
+
+      private
+
+      def namespace
+        @mutex.synchronize do
+          @override_namespace || ENV.fetch("RATE_LIMIT_NAMESPACE", Rails.application.class.module_parent_name.underscore)
+        end
+      end
+
+      def cache_key(identifier, bucket)
+        digest = Digest::SHA256.hexdigest(identifier.to_s)
+        "rate-limit:v2:#{namespace}:#{digest}:#{bucket}"
+      end
+
+      def increment_counter(key)
+        Rails.cache.increment(key, 1, expires_in: WINDOW_SECONDS + 5) || initialize_counter(key)
+      end
+
+      def initialize_counter(key)
+        Rails.cache.write(key, 1, expires_in: WINDOW_SECONDS + 5)
+        1
+      end
+
+      def retry_after(now)
+        [ WINDOW_SECONDS - (now % WINDOW_SECONDS), 1 ].max
       end
     end
   end

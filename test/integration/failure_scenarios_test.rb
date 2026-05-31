@@ -51,24 +51,25 @@ class FailureScenariosTest < ActionDispatch::IntegrationTest
     token = bootstrap.dig("owner", "api_token")
     profile = create_fiscal_profile(token: token)
     customer = create_customer(token: token)
-    create_service_invoice(
+    created_invoice = create_service_invoice(
       token: token,
       fiscal_profile_id: profile.fetch("id"),
       customer_id: customer.fetch("id"),
       attributes: { service_description: "Software implementation [provider_timeout]" }
     )
+    public_id = created_invoice.fetch("id")
 
-    get "/v1/service_invoices/NFS-000001", headers: auth_headers(token)
+    get "/v1/service_invoices/#{public_id}", headers: auth_headers(token)
     etag = response.headers.fetch("ETag")
 
-    post "/v1/service_invoices/NFS-000001/issue", headers: auth_headers(token, "If-Match" => etag), as: :json
+    post "/v1/service_invoices/#{public_id}/issue", headers: auth_headers(token, "If-Match" => etag), as: :json
 
     assert_response :accepted
     assert_raises(Providers::SandboxNfseClient::TimeoutError) do
       perform_enqueued_jobs(only: IssueServiceInvoiceJob)
     end
 
-    invoice = ServiceInvoice.find_by!(public_id: "NFS-000001")
+    invoice = Organization.find(bootstrap.dig("organization", "id")).service_invoices.find_by!(public_id: public_id)
     assert_equal "pending_issue", invoice.status
     assert_equal "failed", invoice.provider_requests.issue.last.status
     assert AuditLog.exists?(action: "service_invoice.provider_timeout")

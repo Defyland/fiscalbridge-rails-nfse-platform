@@ -1,0 +1,13 @@
+draft_invoice_created_event:
+  organization: acme
+  aggregate_type: ServiceInvoice
+  aggregate_id: <%= ActiveRecord::FixtureSet.identify(:draft_invoice) %>
+  event_type: service_invoice.created
+  payload:
+    service_invoice_id: NFS-000001
+  idempotency_key: fixture-outbound-event
+  correlation_id: fixture-correlation
+  status: pending
+  attempts_count: 0
+  created_at: <%= 1.day.ago %>
+  updated_at: <%= 1.day.ago %>

@@ -1,10 +1,11 @@
 module Invoices
   class Issue
     def self.call!(invoice:, actor:, expected_lock_version:)
-      raise InvalidTransition, "Service invoice version is stale." unless invoice.lock_version == expected_lock_version
-      raise InvalidTransition, "Only draft or rejected invoices can be issued." unless invoice.can_issue?
-
       ActiveRecord::Base.transaction do
+        invoice.lock!
+        raise InvalidTransition, "Service invoice version is stale." unless invoice.lock_version == expected_lock_version
+        raise InvalidTransition, "Only draft or rejected invoices can be issued." unless invoice.can_issue?
+
         invoice.update!(
           status: "pending_issue",
           rejection_reason: nil,

@@ -4,7 +4,10 @@ class StatusPollServiceInvoiceJob < ApplicationJob
   def perform(service_invoice_id, provider_request_id)
     invoice = ServiceInvoice.find(service_invoice_id)
     provider_request = ProviderRequest.find(provider_request_id)
-    result = Providers::SandboxNfseClient.status(invoice)
+    result = Providers::SandboxNfseClient.fetch_status(
+      invoice,
+      environment: invoice.fiscal_profile.environment
+    )
 
     provider_request.update!(
       status: "succeeded",

@@ -1,0 +1,14 @@
+acme:
+  name: Acme Fiscal Ops
+  slug: acme-fiscal-ops
+  legal_name: Acme Fiscal Ops Ltda
+  tax_id: "11222333000181"
+  municipal_registration: "123456"
+  plan: growth
+  state: active
+  seat_limit: 10
+  monthly_invoice_limit: 1000
+  current_month_invoice_count: 1
+  next_invoice_sequence: 2
+  created_at: <%= 2.days.ago %>
+  updated_at: <%= 2.days.ago %>

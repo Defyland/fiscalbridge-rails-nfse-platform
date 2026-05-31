@@ -57,6 +57,11 @@ jobs:
       - name: Run tests
         run: bin/rails test
 
+      - name: Run system tests
+        env:
+          SYSTEM_TEST_DRIVER: selenium
+        run: bin/rails test:system
+
       - name: Validate OpenAPI
         run: npx @redocly/cli@latest lint openapi.yaml
 

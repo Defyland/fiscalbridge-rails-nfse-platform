@@ -1,5 +1,5 @@
 module V1
-  class CustomersController < ApplicationController
+  class CustomersController < ApiController
     def index
       authorize!(:customers_list)
 

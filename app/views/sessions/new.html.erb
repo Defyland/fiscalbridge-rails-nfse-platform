@@ -1,0 +1,28 @@
+<main class="auth-shell">
+  <section class="auth-panel">
+    <h1>FiscalBridge</h1>
+    <p class="muted">Backoffice operacional de NFS-e.</p>
+
+    <% if alert.present? %>
+      <div class="flash alert"><%= alert %></div>
+    <% end %>
+
+    <% if notice.present? %>
+      <div class="flash notice"><%= notice %></div>
+    <% end %>
+
+    <%= form_with url: session_path do |form| %>
+      <div class="field">
+        <%= form.label :email_address, "Email" %>
+        <%= form.email_field :email_address, autocomplete: "username", required: true, autofocus: true %>
+      </div>
+
+      <div class="field">
+        <%= form.label :password, "Senha" %>
+        <%= form.password_field :password, autocomplete: "current-password", required: true %>
+      </div>
+
+      <%= form.submit "Entrar" %>
+    <% end %>
+  </section>
+</main>

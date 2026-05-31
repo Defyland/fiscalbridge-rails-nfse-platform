@@ -16,6 +16,13 @@ class ServiceInvoiceJobsTest < ActiveJob::TestCase
     IssueServiceInvoiceJob.perform_now(invoice.id)
 
     assert_equal "issued", invoice.reload.status
+    assert invoice.xml_file.attached?
+    assert invoice.pdf_file.attached?
+    assert_includes invoice.xml_file.download, invoice.customer.document_number
+    assert_equal Digest::SHA256.hexdigest(invoice.xml_file.download), request.reload.response_payload.fetch("xml_sha256")
+    assert_equal request.response_payload.fetch("xml_sha256"), invoice.xml_sha256
+    assert_equal Digest::SHA256.hexdigest(invoice.pdf_file.download), invoice.pdf_sha256
+    assert invoice.evidence_recorded_at.present?
     assert_equal "succeeded", request.reload.status
   end
 

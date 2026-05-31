@@ -6,15 +6,15 @@ Accepted
 
 ## Context
 
-FiscalBridge demonstrates behavior that depends on database-level guarantees: tenant-scoped uniqueness, check constraints, row locks for invoice sequence allocation, quota enforcement under concurrent writers, provider idempotency keys, and optimistic locking. SQLite is useful for a self-contained demo, but it does not represent the production concurrency model expected from a fiscal backend.
+FiscalBridge demonstrates behavior that depends on database-level guarantees: tenant-scoped uniqueness, check constraints, row locks for invoice sequence allocation, quota enforcement under concurrent writers, provider idempotency keys, optimistic locking, Solid Queue, Solid Cache, Solid Cable, Active Storage, and web sessions.
 
 ## Decision
 
-Use PostgreSQL as the default database for development, benchmark, CI, Docker Compose, and production. Keep SQLite as an explicit fallback through `DATABASE_ADAPTER=sqlite3`.
+Use PostgreSQL as the only runtime database for development, benchmark, CI, Docker Compose, and production.
 
 ## Consequences
 
 - Docker Compose and CI run against `postgres:16`
 - invoice sequence and quota tests can rely on PostgreSQL row-level locking semantics
 - `db/schema.rb` is the primary schema dump
-- `db/schema.sqlite.rb` exists only for fallback local runs
+- Solid Queue, Solid Cache, Solid Cable, web auth sessions, and fiscal data share the same PostgreSQL deployment dependency

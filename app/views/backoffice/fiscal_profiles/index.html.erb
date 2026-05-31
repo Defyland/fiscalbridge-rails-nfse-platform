@@ -1,0 +1,39 @@
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Perfis fiscais</h1>
+    <p class="page-subtitle">Configuracao de emissor, municipio e ambiente.</p>
+  </div>
+</div>
+
+<div class="panel table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Razao social</th>
+        <th>CNPJ</th>
+        <th>Municipio</th>
+        <th>Servico</th>
+        <th>Regime</th>
+        <th>Ambiente</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @fiscal_profiles.each do |profile| %>
+        <tr>
+          <td><%= profile.legal_name %></td>
+          <td class="mono"><%= profile.tax_id %></td>
+          <td><%= profile.city_code %></td>
+          <td><%= profile.service_list_item %></td>
+          <td><%= profile.taxation_regime %></td>
+          <td><span class="badge <%= status_badge_class(profile.environment) %>"><%= profile.environment %></span></td>
+        </tr>
+      <% end %>
+
+      <% if @fiscal_profiles.empty? %>
+        <tr>
+          <td colspan="6" class="muted">Nenhum perfil fiscal cadastrado.</td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

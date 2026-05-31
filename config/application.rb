@@ -7,7 +7,7 @@ require "rails"
 require "active_model/railtie"
 require "active_job/railtie"
 require "active_record/railtie"
-# require "active_storage/engine"
+require "active_storage/engine"
 require "action_controller/railtie"
 require "action_mailer/railtie"
 # require "action_mailbox/engine"
@@ -25,10 +25,13 @@ module FiscalBridgeRailsNfsePlatform
     config.load_defaults 8.1
     config.autoload_lib(ignore: %w[assets tasks])
 
-    config.api_only = true
     config.time_zone = "UTC"
     config.active_record.default_timezone = :utc
-    config.active_job.queue_adapter = :async
+    config.active_job.queue_adapter = :solid_queue
+    config.cache_store = :solid_cache_store
+    config.active_storage.variant_processor = :disabled
+    config.solid_queue.connects_to = { database: { writing: :primary } }
+    config.solid_cache.connects_to = { database: { writing: :primary } }
 
     config.middleware.insert_before(0, Middleware::RequestContext)
     config.middleware.use(Middleware::Metrics)

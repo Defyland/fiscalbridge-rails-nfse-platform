@@ -1,11 +1,20 @@
 source "https://rubygems.org"
 
-ruby "3.3.6"
+ruby "3.4.6"
 
 gem "rails", "~> 8.1.2"
 gem "pg", ">= 1.5"
-gem "sqlite3", ">= 2.1"
 gem "puma", ">= 5.0"
+gem "propshaft"
+gem "importmap-rails"
+gem "turbo-rails"
+gem "stimulus-rails"
+gem "bcrypt", "~> 3.1"
+gem "solid_queue"
+gem "solid_cache"
+gem "solid_cable"
+gem "kamal", require: false
+gem "thruster", require: false
 gem "tzinfo-data", platforms: %i[ windows jruby ]
 gem "bootsnap", require: false
 gem "opentelemetry-api"
@@ -23,4 +32,6 @@ group :development, :test do
   gem "brakeman", require: false
   gem "rubocop-rails-omakase", require: false
   gem "simplecov", require: false
+  gem "capybara", require: false
+  gem "selenium-webdriver", require: false
 end

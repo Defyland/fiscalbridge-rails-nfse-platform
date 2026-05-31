@@ -1,0 +1,33 @@
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Membros</h1>
+    <p class="page-subtitle">Papeis, estado de acesso e vinculo com usuario web.</p>
+  </div>
+</div>
+
+<div class="panel table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Email</th>
+        <th>Nome</th>
+        <th>Papel</th>
+        <th>Estado</th>
+        <th>Usuario web</th>
+        <th>Token expira</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @memberships.each do |membership| %>
+        <tr>
+          <td><%= membership.email %></td>
+          <td><%= membership.full_name %></td>
+          <td><%= membership.role %></td>
+          <td><span class="badge <%= status_badge_class(membership.state) %>"><%= membership.state %></span></td>
+          <td><%= membership.user&.email_address || "-" %></td>
+          <td><%= local_time(membership.api_token_expires_at) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

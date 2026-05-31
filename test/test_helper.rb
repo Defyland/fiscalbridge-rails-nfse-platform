@@ -14,6 +14,7 @@ Dir[Rails.root.join("test/support/**/*.rb")].sort.each { |file| require file }
 module ActiveSupport
   class TestCase
     parallelize(workers: :number_of_processors)
+    fixtures :all
     include ActiveJob::TestHelper
 
     setup do

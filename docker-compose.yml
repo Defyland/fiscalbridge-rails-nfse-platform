@@ -16,7 +16,11 @@ services:
       retries: 10
 
   app:
-    build: .
+    build:
+      context: .
+      args:
+        BUNDLE_WITHOUT: ""
+        INSTALL_BROWSER: "true"
     command: bundle exec rails server -b 0.0.0.0 -p 3000
     environment:
       RAILS_ENV: development
@@ -26,11 +30,38 @@ services:
       POSTGRES_PASSWORD: fiscalbridge
       POSTGRES_DB: fiscalbridge_development
       RATE_LIMIT_REQUESTS_PER_MINUTE: 120
+      CHROME_BIN: /usr/bin/chromium
+      CHROMEDRIVER_PATH: /usr/bin/chromedriver
     depends_on:
       db:
         condition: service_healthy
     ports:
-      - "3000:3000"
+      - "${APP_PORT:-3000}:3000"
+    volumes:
+      - .:/app
+      - bundle_cache:/usr/local/bundle
+      - fiscalbridge_storage:/app/storage
+
+  jobs:
+    build:
+      context: .
+      args:
+        BUNDLE_WITHOUT: ""
+        INSTALL_BROWSER: "true"
+    command: bundle exec bin/jobs
+    environment:
+      RAILS_ENV: development
+      SECRET_KEY_BASE: local-development-secret
+      POSTGRES_HOST: db
+      POSTGRES_USER: fiscalbridge
+      POSTGRES_PASSWORD: fiscalbridge
+      POSTGRES_DB: fiscalbridge_development
+      RATE_LIMIT_REQUESTS_PER_MINUTE: 120
+      CHROME_BIN: /usr/bin/chromium
+      CHROMEDRIVER_PATH: /usr/bin/chromedriver
+    depends_on:
+      db:
+        condition: service_healthy
     volumes:
       - .:/app
       - bundle_cache:/usr/local/bundle

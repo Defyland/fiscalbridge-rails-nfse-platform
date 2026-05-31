@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Defyland/fiscalbridge-rails-nfse-platform/docs/events/service_invoice_rejected.v1.json",
+  "title": "service_invoice.rejected v1",
+  "type": "object",
+  "required": ["event_id", "event_type", "schema_version", "occurred_at", "producer", "organization_id", "service_invoice_id", "correlation_id", "provider", "environment", "payload"],
+  "properties": {
+    "event_id": { "type": "string" },
+    "event_type": { "type": "string", "const": "service_invoice.rejected" },
+    "schema_version": { "type": "integer", "const": 1 },
+    "occurred_at": { "type": "string", "format": "date-time" },
+    "producer": { "type": "string", "const": "fiscalbridge" },
+    "organization_id": { "type": "string" },
+    "service_invoice_id": { "type": "string" },
+    "correlation_id": { "type": "string" },
+    "provider": { "type": "string" },
+    "environment": { "type": "string", "enum": ["sandbox", "homologation", "production"] },
+    "payload": { "type": "object" }
+  },
+  "additionalProperties": false
+}

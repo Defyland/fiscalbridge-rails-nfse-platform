@@ -1,0 +1,147 @@
+<div class="page-header">
+  <div>
+    <h1 class="page-title"><%= @service_invoice.public_id %></h1>
+    <p class="page-subtitle">
+      <span class="badge <%= status_badge_class(@service_invoice.status) %>"><%= @service_invoice.status %></span>
+      <span class="mono">lock <%= @service_invoice.lock_version %></span>
+    </p>
+  </div>
+
+  <div class="actions">
+    <%= link_to "Voltar", backoffice_service_invoices_path, class: "button secondary" %>
+    <% if @service_invoice.can_issue? %>
+      <%= button_to "Emitir",
+                    issue_backoffice_service_invoice_path(@service_invoice.public_id),
+                    method: :post,
+                    params: { lock_version: @service_invoice.lock_version } %>
+    <% end %>
+    <%= button_to "Consultar status",
+                  poll_status_backoffice_service_invoice_path(@service_invoice.public_id),
+                  method: :post,
+                  params: { lock_version: @service_invoice.lock_version },
+                  class: "secondary" %>
+  </div>
+</div>
+
+<section class="panel">
+  <div class="detail-grid" style="padding: 0 18px;">
+    <div class="detail">
+      <div class="detail-label">Cliente</div>
+      <div class="detail-value"><%= @service_invoice.customer.legal_name %></div>
+    </div>
+    <div class="detail">
+      <div class="detail-label">Documento</div>
+      <div class="detail-value mono"><%= @service_invoice.customer.document_number %></div>
+    </div>
+    <div class="detail">
+      <div class="detail-label">Valor</div>
+      <div class="detail-value"><%= money_from_cents(@service_invoice.amount_cents) %></div>
+    </div>
+    <div class="detail">
+      <div class="detail-label">Perfil fiscal</div>
+      <div class="detail-value"><%= @service_invoice.fiscal_profile.legal_name %></div>
+    </div>
+    <div class="detail">
+      <div class="detail-label">Provider</div>
+      <div class="detail-value mono"><%= @service_invoice.provider_invoice_number || "-" %></div>
+    </div>
+    <div class="detail">
+      <div class="detail-label">Protocolo</div>
+      <div class="detail-value mono"><%= @service_invoice.provider_protocol || "-" %></div>
+    </div>
+    <div class="detail">
+      <div class="detail-label">XML</div>
+      <div class="detail-value"><%= @service_invoice.xml_file.attached? ? "Anexado" : (@service_invoice.xml_url.presence || "-") %></div>
+    </div>
+    <div class="detail">
+      <div class="detail-label">PDF</div>
+      <div class="detail-value"><%= @service_invoice.pdf_file.attached? ? "Anexado" : (@service_invoice.pdf_url.presence || "-") %></div>
+    </div>
+    <div class="detail">
+      <div class="detail-label">Criador</div>
+      <div class="detail-value"><%= @service_invoice.created_by_membership.email %></div>
+    </div>
+  </div>
+</section>
+
+<% if @service_invoice.can_cancel? %>
+  <section class="section panel" style="padding: 18px;">
+    <div class="section-heading">
+      <h2>Cancelamento</h2>
+    </div>
+    <%= form_with url: cancel_backoffice_service_invoice_path(@service_invoice.public_id), method: :post, class: "filters" do |form| %>
+      <%= hidden_field_tag :lock_version, @service_invoice.lock_version %>
+      <div class="field" style="min-width: min(420px, 100%);">
+        <%= form.label "cancellation_reason", "Motivo" %>
+        <%= text_field_tag "cancellation[reason]", nil, required: true, placeholder: "Erro de dados fiscais" %>
+      </div>
+      <%= form.submit "Cancelar nota", class: "danger" %>
+    <% end %>
+  </section>
+<% end %>
+
+<section class="section">
+  <div class="section-heading">
+    <h2>Provider requests</h2>
+  </div>
+  <div class="panel table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Acao</th>
+          <th>Status</th>
+          <th>Idempotency key</th>
+          <th>Respondido em</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @provider_requests.each do |request| %>
+          <tr>
+            <td><%= request.action %></td>
+            <td><span class="badge <%= status_badge_class(request.status) %>"><%= request.status %></span></td>
+            <td class="mono"><%= request.idempotency_key %></td>
+            <td><%= local_time(request.responded_at) %></td>
+          </tr>
+        <% end %>
+
+        <% if @provider_requests.empty? %>
+          <tr>
+            <td colspan="4" class="muted">Nenhuma chamada de provider registrada.</td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-heading">
+    <h2>Auditoria</h2>
+  </div>
+  <div class="panel table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Evento</th>
+          <th>Membro</th>
+          <th>Registrado em</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @audit_logs.each do |audit_log| %>
+          <tr>
+            <td><%= audit_log.action %></td>
+            <td><%= audit_log.membership&.email || "-" %></td>
+            <td><%= local_time(audit_log.created_at) %></td>
+          </tr>
+        <% end %>
+
+        <% if @audit_logs.empty? %>
+          <tr>
+            <td colspan="3" class="muted">Nenhum evento de auditoria registrado.</td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</section>

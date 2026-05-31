@@ -1,10 +1,11 @@
 module Invoices
   class Cancel
     def self.call!(invoice:, actor:, expected_lock_version:, reason:)
-      raise InvalidTransition, "Service invoice version is stale." unless invoice.lock_version == expected_lock_version
-      raise InvalidTransition, "Only issued invoices can be cancelled." unless invoice.can_cancel?
-
       ActiveRecord::Base.transaction do
+        invoice.lock!
+        raise InvalidTransition, "Service invoice version is stale." unless invoice.lock_version == expected_lock_version
+        raise InvalidTransition, "Only issued invoices can be cancelled." unless invoice.can_cancel?
+
         invoice.update!(
           status: "pending_cancellation",
           cancellation_reason: reason

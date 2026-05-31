@@ -1,0 +1,12 @@
+acme_customer:
+  organization: acme
+  legal_name: Cliente Operacional Ltda
+  document_type: cnpj
+  document_number: "22333444000155"
+  email: financeiro@cliente.test
+  city_code: "3550308"
+  address_line: Av. Paulista, 1000
+  state_code: SP
+  country_code: BR
+  created_at: <%= 2.days.ago %>
+  updated_at: <%= 2.days.ago %>

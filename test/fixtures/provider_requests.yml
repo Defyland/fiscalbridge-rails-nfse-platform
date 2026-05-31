@@ -1,0 +1,12 @@
+draft_invoice_issue_request:
+  organization: acme
+  service_invoice: draft_invoice
+  provider_name: sandbox_nfse
+  action: issue
+  status: pending
+  request_payload: {}
+  response_payload: {}
+  idempotency_key: fixture-provider-request
+  correlation_id: fixture-correlation
+  created_at: <%= 1.day.ago %>
+  updated_at: <%= 1.day.ago %>

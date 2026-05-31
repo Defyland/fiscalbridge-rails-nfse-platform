@@ -1,5 +1,5 @@
 module V1
-  class ServiceInvoicesController < ApplicationController
+  class ServiceInvoicesController < ApiController
     def index
       authorize!(:service_invoices_list)
 

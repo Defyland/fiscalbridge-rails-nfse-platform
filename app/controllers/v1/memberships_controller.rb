@@ -1,5 +1,5 @@
 module V1
-  class MembershipsController < ApplicationController
+  class MembershipsController < ApiController
     def index
       authorize!(:memberships_list)
 

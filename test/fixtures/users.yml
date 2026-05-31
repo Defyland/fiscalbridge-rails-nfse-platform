@@ -1,0 +1,13 @@
+owner_user:
+  membership: owner
+  email_address: owner@acme.test
+  password_digest: <%= BCrypt::Password.create("password123") %>
+  created_at: <%= 2.days.ago %>
+  updated_at: <%= 2.days.ago %>
+
+auditor_user:
+  membership: auditor
+  email_address: auditor@acme.test
+  password_digest: <%= BCrypt::Password.create("password123") %>
+  created_at: <%= 2.days.ago %>
+  updated_at: <%= 2.days.ago %>

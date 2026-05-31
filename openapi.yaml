@@ -766,8 +766,29 @@ components:
           type: string
         pdf_url:
           type: string
+        xml_sha256:
+          type: string
+          pattern: "^[0-9a-f]{64}$"
+        pdf_sha256:
+          type: string
+          pattern: "^[0-9a-f]{64}$"
         lock_version:
           type: integer
+        issued_at:
+          type: string
+          format: date-time
+        cancelled_at:
+          type: string
+          format: date-time
+        evidence_recorded_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
         fiscal_profile:
           $ref: "#/components/schemas/FiscalProfile"
         customer:

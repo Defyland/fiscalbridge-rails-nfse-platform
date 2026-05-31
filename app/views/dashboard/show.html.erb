@@ -1,0 +1,86 @@
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Operacao fiscal</h1>
+    <p class="page-subtitle"><%= @organization.slug %> / plano <%= @organization.plan %></p>
+  </div>
+  <%= link_to "Ver notas", backoffice_service_invoices_path, class: "button secondary" %>
+</div>
+
+<section class="metrics-grid" aria-label="Indicadores">
+  <div class="metric">
+    <div class="metric-label">Notas no mes</div>
+    <div class="metric-value"><%= @organization.current_month_invoice_count %></div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Limite mensal</div>
+    <div class="metric-value"><%= @organization.monthly_invoice_limit %></div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Provider pendente</div>
+    <div class="metric-value"><%= @pending_provider_requests %></div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Outbox falho</div>
+    <div class="metric-value"><%= @failed_outbound_events %></div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-heading">
+    <h2>Status das notas</h2>
+  </div>
+  <div class="panel table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Status</th>
+          <th>Quantidade</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% ServiceInvoice.statuses.keys.each do |status| %>
+          <tr>
+            <td><span class="badge <%= status_badge_class(status) %>"><%= status %></span></td>
+            <td><%= @invoice_counts.fetch(status, 0) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-heading">
+    <h2>Notas recentes</h2>
+  </div>
+  <div class="panel table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Nota</th>
+          <th>Status</th>
+          <th>Cliente</th>
+          <th>Valor</th>
+          <th>Criada em</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @recent_invoices.each do |invoice| %>
+          <tr>
+            <td><%= link_to invoice.public_id, backoffice_service_invoice_path(invoice.public_id), class: "mono" %></td>
+            <td><span class="badge <%= status_badge_class(invoice.status) %>"><%= invoice.status %></span></td>
+            <td><%= invoice.customer.legal_name %></td>
+            <td><%= money_from_cents(invoice.amount_cents) %></td>
+            <td><%= local_time(invoice.created_at) %></td>
+          </tr>
+        <% end %>
+
+        <% if @recent_invoices.empty? %>
+          <tr>
+            <td colspan="5" class="muted">Nenhuma nota criada.</td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</section>

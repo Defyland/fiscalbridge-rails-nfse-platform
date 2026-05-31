@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>FiscalBridge</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body>
+    <% if authenticated? %>
+      <div class="app-shell">
+        <header class="topbar">
+          <div class="topbar-inner">
+            <div>
+              <%= link_to "FiscalBridge", dashboard_path, class: "brand" %>
+              <div class="user-meta"><%= current_organization.name %> / <%= current_membership.role %></div>
+            </div>
+
+            <nav class="nav" aria-label="Principal">
+              <%= link_to "Dashboard", dashboard_path %>
+              <%= link_to "Notas", backoffice_service_invoices_path %>
+              <%= link_to "Clientes", backoffice_customers_path %>
+              <%= link_to "Perfis fiscais", backoffice_fiscal_profiles_path %>
+              <%= link_to "Membros", backoffice_memberships_path %>
+            </nav>
+
+            <div class="user-strip">
+              <span class="user-meta"><%= current_user.email_address %></span>
+              <%= button_to "Sair", session_path, method: :delete, class: "secondary" %>
+            </div>
+          </div>
+        </header>
+
+        <main class="main">
+          <% if notice.present? %>
+            <div class="flash notice"><%= notice %></div>
+          <% end %>
+
+          <% if alert.present? %>
+            <div class="flash alert"><%= alert %></div>
+          <% end %>
+
+          <%= yield %>
+        </main>
+      </div>
+    <% else %>
+      <%= yield %>
+    <% end %>
+  </body>
+</html>
