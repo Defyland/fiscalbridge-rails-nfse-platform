@@ -23,5 +23,6 @@ FiscalBridge satisfies the initiative-wide baseline through a working Rails API,
 - append-only audit logs with provider request evidence
 - traceable invoice lifecycle transitions across local and provider states
 - failure coverage for provider timeouts, duplicate callbacks, stale preconditions, tenant isolation, and safe reprocessing
+- OpenAPI required response fields validated against live integration responses
 - plan-based seat and invoice quotas
 - PostgreSQL row-lock design for invoice sequence and quota behavior

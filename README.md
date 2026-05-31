@@ -119,6 +119,7 @@ The suite uses Minitest and covers:
 - provider timeout and duplicate callback failure scenarios
 - outbox retry/failure behavior
 - transaction rollback boundaries
+- OpenAPI required response fields checked against real API responses
 - repository compliance against this initiative's general spec
 
 ## 12. Performance benchmarks

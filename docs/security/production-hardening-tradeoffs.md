@@ -27,6 +27,8 @@ The project now handles the practical hardening that fits this repository:
 - bounded cursor pagination on registry and invoice list endpoints.
 - Prometheus HTTP histograms backed by aggregate bucket counters instead of
   unbounded per-request duration arrays.
+- integration tests that validate OpenAPI required response fields against real
+  controller responses.
 
 The remaining production gaps are not accidental. They need real operational
 inputs: legal provider credentials, certificate strategy, fraud/risk appetite,
