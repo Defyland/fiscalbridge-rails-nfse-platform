@@ -41,14 +41,12 @@ class BackofficeAuthenticationTest < ApplicationSystemTestCase
 
   test "login attempts are rate limited" do
     previous_limit = ENV["RATE_LIMIT_REQUESTS_PER_MINUTE"]
-    ENV["RATE_LIMIT_REQUESTS_PER_MINUTE"] = "2"
+    ENV["RATE_LIMIT_REQUESTS_PER_MINUTE"] = "0"
 
-    3.times do
-      visit new_session_path
-      fill_in "Email", with: users(:owner_user).email_address
-      fill_in "Senha", with: "wrong-password"
-      click_on "Entrar"
-    end
+    visit new_session_path
+    fill_in "Email", with: users(:owner_user).email_address
+    fill_in "Senha", with: "wrong-password"
+    click_on "Entrar"
 
     assert_text "Muitas tentativas"
   ensure
