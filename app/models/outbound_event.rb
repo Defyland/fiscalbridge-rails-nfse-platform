@@ -1,4 +1,6 @@
 class OutboundEvent < ApplicationRecord
+  PROCESSING_TIMEOUT = 10.minutes
+
   belongs_to :organization
 
   enum :status, {
@@ -12,6 +14,12 @@ class OutboundEvent < ApplicationRecord
   validates :idempotency_key, uniqueness: true
 
   scope :due_for_dispatch, -> {
-    pending.where("next_attempt_at IS NULL OR next_attempt_at <= ?", Time.current).order(:created_at)
+    where(status: "pending").where("next_attempt_at IS NULL OR next_attempt_at <= ?", Time.current)
+                            .or(
+                              where(status: "processing")
+                                .where("processing_started_at IS NULL OR processing_started_at <= ?",
+                                       PROCESSING_TIMEOUT.ago)
+                            )
+                            .order(:created_at)
   }
 end

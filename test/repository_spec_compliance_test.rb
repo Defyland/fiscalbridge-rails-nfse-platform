@@ -209,7 +209,8 @@ class RepositorySpecComplianceTest < ActiveSupport::TestCase
 
     assert_includes migration, "t.bigint :aggregate_id"
     assert_includes recurring, "DispatchDueOutboundEventsJob"
-    assert_includes dispatch_job, "set(wait_until: event.next_attempt_at).perform_later(event.id)"
+    assert_includes dispatch_job, "claim_event(outbound_event_id)"
+    assert_includes dispatch_job, "set(wait_until: next_attempt_at).perform_later(event.id)"
   end
 
   test "keeps security observability and data consistency artifacts" do

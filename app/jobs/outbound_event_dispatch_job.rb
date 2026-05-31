@@ -27,32 +27,18 @@ class OutboundEventDispatchJob < ApplicationJob
   ].freeze
 
   def perform(outbound_event_id)
-    event = OutboundEvent.find(outbound_event_id)
-    return if event.dispatched?
-    return if event.pending? && event.next_attempt_at.present? && event.next_attempt_at.future?
+    event = claim_event(outbound_event_id)
+    return if event.nil?
 
     raise UnsupportedEventType, "Unsupported event type #{event.event_type}" unless SUPPORTED_EVENT_TYPES.include?(event.event_type)
 
-    event.update!(
-      status: "processing",
-      processing_started_at: Time.current,
-      attempts_count: event.attempts_count + 1,
-      last_error: nil,
-      next_attempt_at: nil
-    )
-
     self.class.deliver(event)
 
-    event.update!(
-      status: "dispatched",
-      dispatched_at: Time.current,
-      processing_started_at: nil,
-      last_error: nil
-    )
+    mark_dispatched(event.id)
 
     Observability::MetricsRegistry.record_outbound(
       event_type: event.event_type,
-      status: event.status
+      status: "dispatched"
     )
 
     Rails.logger.info(
@@ -68,11 +54,51 @@ class OutboundEventDispatchJob < ApplicationJob
     schedule_retry_or_failure(outbound_event_id, error)
   end
 
-  def self.deliver(_event)
-    true
+  def self.deliver(event)
+    Events::Delivery.deliver!(event)
   end
 
   private
+
+  def claim_event(outbound_event_id)
+    OutboundEvent.transaction do
+      event = OutboundEvent.lock.find_by(id: outbound_event_id)
+
+      if event.nil? || event.dispatched?
+        nil
+      elsif event.processing? && !processing_stale?(event)
+        nil
+      elsif event.pending? && event.next_attempt_at.present? && event.next_attempt_at.future?
+        nil
+      else
+        event.update!(
+          status: "processing",
+          processing_started_at: Time.current,
+          attempts_count: event.attempts_count + 1,
+          last_error: nil,
+          next_attempt_at: nil
+        )
+        event
+      end
+    end
+  end
+
+  def processing_stale?(event)
+    event.processing_started_at.nil? || event.processing_started_at <= OutboundEvent::PROCESSING_TIMEOUT.ago
+  end
+
+  def mark_dispatched(outbound_event_id)
+    event = OutboundEvent.find_by(id: outbound_event_id)
+    return if event.nil?
+
+    event.update!(
+      status: "dispatched",
+      dispatched_at: Time.current,
+      processing_started_at: nil,
+      last_error: nil,
+      next_attempt_at: nil
+    )
+  end
 
   def mark_unsupported_event(outbound_event_id, error)
     event = OutboundEvent.find_by(id: outbound_event_id)
@@ -80,7 +106,7 @@ class OutboundEventDispatchJob < ApplicationJob
 
     event.update_columns(
       status: "failed",
-      attempts_count: event.attempts_count + 1,
+      attempts_count: [ event.attempts_count, 1 ].max,
       last_error: error.message,
       processing_started_at: nil,
       next_attempt_at: nil,
@@ -97,21 +123,26 @@ class OutboundEventDispatchJob < ApplicationJob
     event = OutboundEvent.find_by(id: outbound_event_id)
     return if event.nil?
 
-    attempts_count = [ event.attempts_count, 1 ].max
-    final_failure = attempts_count >= MAX_ATTEMPTS
+    next_attempt_at = nil
+    final_failure = nil
 
-    next_attempt_at = final_failure ? nil : retry_at(attempts_count)
+    event.with_lock do
+      attempts_count = [ event.attempts_count, 1 ].max
+      final_failure = attempts_count >= MAX_ATTEMPTS
 
-    event.update_columns(
-      status: final_failure ? "failed" : "pending",
-      attempts_count: attempts_count,
-      last_error: error.message,
-      processing_started_at: nil,
-      next_attempt_at: next_attempt_at,
-      updated_at: Time.current
-    )
+      next_attempt_at = final_failure ? nil : retry_at(attempts_count)
 
-    self.class.set(wait_until: event.next_attempt_at).perform_later(event.id) unless final_failure
+      event.update_columns(
+        status: final_failure ? "failed" : "pending",
+        attempts_count: attempts_count,
+        last_error: error.message,
+        processing_started_at: nil,
+        next_attempt_at: next_attempt_at,
+        updated_at: Time.current
+      )
+    end
+
+    self.class.set(wait_until: next_attempt_at).perform_later(event.id) unless final_failure
 
     Observability::MetricsRegistry.record_outbound(
       event_type: event.event_type,
