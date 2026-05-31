@@ -25,6 +25,8 @@ The project now handles the practical hardening that fits this repository:
 - provider callbacks that fail closed in production when the shared callback
   token is not configured.
 - bounded cursor pagination on registry and invoice list endpoints.
+- Prometheus HTTP histograms backed by aggregate bucket counters instead of
+  unbounded per-request duration arrays.
 
 The remaining production gaps are not accidental. They need real operational
 inputs: legal provider credentials, certificate strategy, fraud/risk appetite,

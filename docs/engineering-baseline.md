@@ -9,7 +9,7 @@ FiscalBridge satisfies the initiative-wide baseline through a working Rails API,
 - `docs/adr/`, `docs/architecture/`, `docs/benchmarks/`, `docs/api/`, `docs/diagrams/`, and `docs/runbooks/`
 - GitHub Actions covering lint, security, tests, OpenAPI linting, Docker build, and coverage artifact upload
 - system tests covering the backoffice authentication and invoice evidence flow
-- observability with JSON logs, request/correlation ids, traces, readiness, and Prometheus metrics
+- observability with JSON logs, request/correlation ids, traces, readiness, and Prometheus metrics using bounded histogram bucket counters
 - k6 benchmark scenarios and measured result artifacts
 
 ## FiscalBridge-specific evidence

@@ -28,4 +28,17 @@ class RateLimitingAndMetricsTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "fiscalbridge_http_requests_total"
     assert_equal "metrics-correlation", response.headers["X-Correlation-ID"]
   end
+
+  test "aggregates request duration histograms without retaining raw samples" do
+    Observability::MetricsRegistry.record(method: "GET", path: "/up", status: 200, duration: 0.02)
+    Observability::MetricsRegistry.record(method: "GET", path: "/up", status: 200, duration: 0.40)
+    Observability::MetricsRegistry.record(method: "GET", path: "/up", status: 200, duration: 6.00)
+
+    metrics = Observability::MetricsRegistry.render
+
+    assert_includes metrics, 'fiscalbridge_http_request_duration_seconds_bucket{method="GET",path="/up",status="200",le="0.05"} 1'
+    assert_includes metrics, 'fiscalbridge_http_request_duration_seconds_bucket{method="GET",path="/up",status="200",le="+Inf"} 3'
+    assert_includes metrics, 'fiscalbridge_http_request_duration_seconds_count{method="GET",path="/up",status="200"} 3'
+    assert_nil Observability::MetricsRegistry.instance_variable_get(:@http_durations)
+  end
 end

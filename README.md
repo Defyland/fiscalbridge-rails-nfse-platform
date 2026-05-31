@@ -131,7 +131,7 @@ The `benchmarks/` directory contains k6 smoke, load, stress, and spike scenarios
 - `X-Request-ID`, `X-Correlation-ID`, and `X-Trace-ID` are propagated on responses where available.
 - `/up` exposes liveness.
 - `/ready` checks database readiness and job adapter state.
-- `/metrics` exports Prometheus-compatible HTTP and outbox counters/histograms.
+- `/metrics` exports Prometheus-compatible HTTP and outbox counters/histograms, with request durations stored as bounded bucket counters rather than retained raw samples.
 - OpenTelemetry export is opt-in through `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`, or `OTEL_TRACES_EXPORTER`.
 - [`docs/diagrams/grafana-fiscalbridge-overview.json`](docs/diagrams/grafana-fiscalbridge-overview.json) defines a Grafana dashboard.
 
