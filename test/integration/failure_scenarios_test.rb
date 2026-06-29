@@ -99,6 +99,7 @@ class FailureScenariosTest < ActionDispatch::IntegrationTest
     end
 
     assert_equal 1, invoice.provider_requests.callback.where(idempotency_key: "callback-123").count
+    assert_equal 1, invoice.audit_logs.where(action: "service_invoice.provider_callback").count
   end
 
   test "provider callback endpoint fails closed in production when token is not configured" do

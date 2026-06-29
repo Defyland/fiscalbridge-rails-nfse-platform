@@ -80,4 +80,26 @@ class MutationTransactionBoundariesTest < ActiveSupport::TestCase
     assert_nil profile.reload.trade_name
     assert_not AuditLog.exists?(action: "fiscal_profile.updated")
   end
+
+  test "provider callback rolls back callback evidence when audit logging fails" do
+    invoice = create_invoice_record(status: "issued")
+    callback_id = "callback-rollback"
+
+    with_stubbed_singleton(Auditing::Logger, :log!, ->(**_args) { raise "audit unavailable" }) do
+      assert_raises(RuntimeError) do
+        Providers::ApplyCallback.call!(
+          payload: {
+            callback_id: callback_id,
+            provider_invoice_number: invoice.provider_invoice_number,
+            status: "cancelled",
+            provider_protocol: "provider-callback-protocol"
+          }
+        )
+      end
+    end
+
+    assert_equal "issued", invoice.reload.status
+    assert_equal 0, invoice.provider_requests.callback.where(idempotency_key: callback_id).count
+    assert_equal 0, invoice.audit_logs.where(action: "service_invoice.provider_callback").count
+  end
 end
