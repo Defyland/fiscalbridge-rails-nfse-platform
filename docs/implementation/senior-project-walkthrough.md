@@ -4,7 +4,7 @@
 
 **Nome:** FiscalBridge (`fiscalbridge-rails-nfse-platform`)
 
-**Stack:** Ruby 3.4.6, Rails 8.1, PostgreSQL 16, ERB, Turbo, Stimulus,
+**Stack:** Ruby 3.4.9, Rails 8.1, PostgreSQL 16, ERB, Turbo, Stimulus,
 Importmap, Propshaft, Minitest, fixtures, Capybara/Selenium, Solid Queue,
 Solid Cache, Solid Cable, Active Job, Active Storage, bcrypt, Kamal, Thruster,
 Docker, RuboCop Rails Omakase, Brakeman, bundler-audit e OpenTelemetry.
