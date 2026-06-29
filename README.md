@@ -238,3 +238,7 @@ and [ADR 006](docs/adr/006-railway-single-service-demo.md).
 - add signed-download API endpoints for XML/PDF fiscal artifacts
 - add signed provider callbacks with timestamp replay protection
 - add NF-e product invoice support as a separate bounded context
+
+## 20. License
+
+MIT. See [LICENSE.txt](./LICENSE.txt).
