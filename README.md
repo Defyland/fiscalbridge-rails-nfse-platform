@@ -51,13 +51,13 @@ Provider webhook -> callback controller -> Providers::ApplyCallback
 
 ## 6. Tech stack
 
-- Ruby 3.4.6 and Rails 8.1 hybrid mode
+- Ruby 3.4.9 and Rails 8.1 hybrid mode
 - PostgreSQL 16 as the runtime database
 - ERB, Turbo, Stimulus, Importmap, and Propshaft
 - Solid Queue, Solid Cache, Solid Cable, Active Job, Active Storage, Action Mailer
 - Rails-style auth with `bcrypt`, `CurrentAttributes`, and signed sessions
 - Minitest, fixtures, system tests with Capybara, SimpleCov, RuboCop Rails Omakase, Brakeman, bundler-audit
-- Kamal, Thruster, Docker, Docker Compose, and k6 benchmark scenarios
+- Kamal, Thruster, Docker, Docker Compose, Railway demo deployment, and k6 benchmark scenarios
 - OpenTelemetry instrumentation, structured JSON logs, Prometheus text metrics
 
 ## 7. Domain model
@@ -190,6 +190,11 @@ bin/rails server
 
 Run `bin/jobs` in a second process when you want Solid Queue jobs to be processed locally.
 
+For a public reviewer-facing deployment, use the Railway path in
+[RAILWAY_DEPLOY.md](RAILWAY_DEPLOY.md). It keeps PostgreSQL as the runtime
+database and enables `SOLID_QUEUE_IN_PUMA=true` so the demo can run as a single
+service.
+
 ## 17. How to run tests
 
 ```sh
@@ -203,6 +208,8 @@ bundle exec bundler-audit check --update
 ```
 
 The full CI workflow is defined in [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
+Railway demo deployment is documented in [RAILWAY_DEPLOY.md](RAILWAY_DEPLOY.md)
+and [ADR 006](docs/adr/006-railway-single-service-demo.md).
 
 ## 18. Failure scenarios
 

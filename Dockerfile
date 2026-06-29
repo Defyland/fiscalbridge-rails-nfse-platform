@@ -1,4 +1,4 @@
-FROM ruby:3.4.6-slim
+FROM ruby:3.4.9-slim
 
 ARG INSTALL_BROWSER=false
 
@@ -32,6 +32,8 @@ COPY . .
 
 RUN mkdir -p storage tmp/pids log \
   && SECRET_KEY_BASE_DUMMY=1 bundle exec rails assets:precompile
+
+ENTRYPOINT ["./bin/docker-entrypoint"]
 
 EXPOSE 80
 
