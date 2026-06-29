@@ -74,7 +74,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_29_164000) do
     t.index ["organization_id", "document_number"], name: "index_customers_on_organization_id_and_document_number", unique: true
     t.index ["organization_id", "legal_name"], name: "index_customers_on_organization_id_and_legal_name"
     t.index ["organization_id"], name: "index_customers_on_organization_id"
-    t.check_constraint "document_type::text = ANY (ARRAY['cnpj'::character varying::text, 'cpf'::character varying::text, 'foreign'::character varying::text])", name: "customers_document_type_valid"
+    t.check_constraint "document_type::text = ANY (ARRAY['cnpj'::character varying, 'cpf'::character varying, 'foreign'::character varying]::text[])", name: "customers_document_type_valid"
   end
 
   create_table "fiscal_profiles", force: :cascade do |t|
@@ -93,8 +93,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_29_164000) do
     t.index ["organization_id", "default_profile"], name: "index_fiscal_profiles_on_organization_id_and_default_profile"
     t.index ["organization_id", "tax_id"], name: "index_fiscal_profiles_on_organization_id_and_tax_id", unique: true
     t.index ["organization_id"], name: "index_fiscal_profiles_on_organization_id"
-    t.check_constraint "environment::text = ANY (ARRAY['sandbox'::character varying::text, 'homologation'::character varying::text, 'production'::character varying::text])", name: "fiscal_profiles_environment_valid"
-    t.check_constraint "taxation_regime::text = ANY (ARRAY['simples_nacional'::character varying::text, 'lucro_presumido'::character varying::text, 'lucro_real'::character varying::text])", name: "fiscal_profiles_taxation_regime_valid"
+    t.check_constraint "environment::text = ANY (ARRAY['sandbox'::character varying, 'homologation'::character varying, 'production'::character varying]::text[])", name: "fiscal_profiles_environment_valid"
+    t.check_constraint "taxation_regime::text = ANY (ARRAY['simples_nacional'::character varying, 'lucro_presumido'::character varying, 'lucro_real'::character varying]::text[])", name: "fiscal_profiles_taxation_regime_valid"
   end
 
   create_table "memberships", force: :cascade do |t|
@@ -118,8 +118,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_29_164000) do
     t.check_constraint "api_token_expires_at > created_at", name: "memberships_api_token_expires_after_creation"
     t.check_constraint "api_token_revoked_at IS NULL OR api_token_revoked_at >= created_at", name: "memberships_api_token_revoked_after_creation"
     t.check_constraint "length(api_token_last_eight::text) = 8", name: "memberships_token_last_eight_length"
-    t.check_constraint "role::text = ANY (ARRAY['owner'::character varying::text, 'admin'::character varying::text, 'operator'::character varying::text, 'auditor'::character varying::text])", name: "memberships_role_valid"
-    t.check_constraint "state::text = ANY (ARRAY['active'::character varying::text, 'suspended'::character varying::text])", name: "memberships_state_valid"
+    t.check_constraint "role::text = ANY (ARRAY['owner'::character varying, 'admin'::character varying, 'operator'::character varying, 'auditor'::character varying]::text[])", name: "memberships_role_valid"
+    t.check_constraint "state::text = ANY (ARRAY['active'::character varying, 'suspended'::character varying]::text[])", name: "memberships_state_valid"
   end
 
   create_table "organizations", force: :cascade do |t|
@@ -140,9 +140,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_29_164000) do
     t.check_constraint "current_month_invoice_count >= 0", name: "organizations_current_month_invoice_count_non_negative"
     t.check_constraint "monthly_invoice_limit > 0", name: "organizations_monthly_invoice_limit_positive"
     t.check_constraint "next_invoice_sequence > 0", name: "organizations_next_invoice_sequence_positive"
-    t.check_constraint "plan::text = ANY (ARRAY['starter'::character varying::text, 'growth'::character varying::text, 'enterprise'::character varying::text])", name: "organizations_plan_valid"
+    t.check_constraint "plan::text = ANY (ARRAY['starter'::character varying, 'growth'::character varying, 'enterprise'::character varying]::text[])", name: "organizations_plan_valid"
     t.check_constraint "seat_limit > 0", name: "organizations_seat_limit_positive"
-    t.check_constraint "state::text = ANY (ARRAY['active'::character varying::text, 'suspended'::character varying::text])", name: "organizations_state_valid"
+    t.check_constraint "state::text = ANY (ARRAY['active'::character varying, 'suspended'::character varying]::text[])", name: "organizations_state_valid"
   end
 
   create_table "outbound_events", force: :cascade do |t|
@@ -167,7 +167,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_29_164000) do
     t.index ["status", "next_attempt_at"], name: "index_outbound_events_on_status_and_next_attempt_at"
     t.check_constraint "attempts_count >= 0", name: "outbound_events_attempts_count_non_negative"
     t.check_constraint "next_attempt_at IS NULL OR status::text = 'pending'::text", name: "outbound_events_next_attempt_only_pending"
-    t.check_constraint "status::text = ANY (ARRAY['pending'::character varying::text, 'processing'::character varying::text, 'dispatched'::character varying::text, 'failed'::character varying::text])", name: "outbound_events_status_valid"
+    t.check_constraint "status::text = ANY (ARRAY['pending'::character varying, 'processing'::character varying, 'dispatched'::character varying, 'failed'::character varying]::text[])", name: "outbound_events_status_valid"
   end
 
   create_table "provider_requests", force: :cascade do |t|
@@ -189,8 +189,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_29_164000) do
     t.index ["organization_id"], name: "index_provider_requests_on_organization_id"
     t.index ["service_invoice_id", "action", "status"], name: "idx_on_service_invoice_id_action_status_57250f2e91"
     t.index ["service_invoice_id"], name: "index_provider_requests_on_service_invoice_id"
-    t.check_constraint "action::text = ANY (ARRAY['issue'::character varying::text, 'cancel'::character varying::text, 'status_poll'::character varying::text, 'callback'::character varying::text])", name: "provider_requests_action_valid"
-    t.check_constraint "status::text = ANY (ARRAY['pending'::character varying::text, 'succeeded'::character varying::text, 'failed'::character varying::text, 'duplicate'::character varying::text])", name: "provider_requests_status_valid"
+    t.check_constraint "action::text = ANY (ARRAY['issue'::character varying, 'cancel'::character varying, 'status_poll'::character varying, 'callback'::character varying]::text[])", name: "provider_requests_action_valid"
+    t.check_constraint "status::text = ANY (ARRAY['pending'::character varying, 'succeeded'::character varying, 'failed'::character varying, 'duplicate'::character varying]::text[])", name: "provider_requests_status_valid"
   end
 
   create_table "service_invoices", force: :cascade do |t|
@@ -232,7 +232,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_29_164000) do
     t.check_constraint "amount_cents > 0", name: "service_invoices_amount_positive"
     t.check_constraint "lock_version >= 0", name: "service_invoices_lock_version_non_negative"
     t.check_constraint "pdf_sha256 IS NULL OR pdf_sha256::text ~ '^[0-9a-f]{64}$'::text", name: "service_invoices_pdf_sha256_valid"
-    t.check_constraint "status::text = ANY (ARRAY['draft'::character varying::text, 'pending_issue'::character varying::text, 'issued'::character varying::text, 'rejected'::character varying::text, 'pending_cancellation'::character varying::text, 'cancelled'::character varying::text, 'cancellation_failed'::character varying::text])", name: "service_invoices_status_valid"
+    t.check_constraint "status::text = ANY (ARRAY['draft'::character varying, 'pending_issue'::character varying, 'issued'::character varying, 'rejected'::character varying, 'pending_cancellation'::character varying, 'cancelled'::character varying, 'cancellation_failed'::character varying]::text[])", name: "service_invoices_status_valid"
     t.check_constraint "tax_rate_bps >= 0 AND tax_rate_bps <= 5000", name: "service_invoices_tax_rate_valid"
     t.check_constraint "xml_sha256 IS NULL OR xml_sha256::text ~ '^[0-9a-f]{64}$'::text", name: "service_invoices_xml_sha256_valid"
   end
