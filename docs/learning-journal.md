@@ -388,3 +388,17 @@ A correção útil foi tratar benchmark como contrato operacional:
 - o binário de `k6` agora é validado antes de uso, com fallback portátil para
   `GOBIN`/`GOPATH` e caminhos padrão de Homebrew;
 - as mensagens de readiness agora apontam direto para o `smoke-server.log`.
+
+## 14. Addendum: CI e setup locais também precisam sobreviver ao PostgreSQL real
+
+O mesmo padrão apareceu fora do benchmark: o repo fazia resets destrutivos de
+banco com `statement_timeout` curto e comandos pouco explícitos, o que podia
+deixar o banco de teste inválido no meio do fluxo.
+
+- o gate `Tests: Rails` do `bin/ci` agora usa
+  `db:drop db:create db:migrate test` com `POSTGRES_STATEMENT_TIMEOUT_MS=0`,
+  porque o fluxo explícito evita a autodestruição do próprio banco de teste
+  enquanto o processo ainda mantém sessão aberta;
+- o `bin/setup` também passou a preparar e resetar banco com esse timeout
+  destrutivo desligado, para que o bootstrap local e o CI contem a mesma
+  verdade operacional.
