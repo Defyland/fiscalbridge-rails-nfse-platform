@@ -3,10 +3,37 @@ import { check } from "k6";
 
 const BASE_URL = __ENV.BASE_URL || "http://127.0.0.1:3000";
 
+function failWithResponse(label, response) {
+  throw new Error(`${label} failed with status ${response.status}: ${response.body}`);
+}
+
+function expectStatus(response, status, label) {
+  const ok = check(response, { [label]: (res) => res.status === status });
+  if (!ok) {
+    failWithResponse(label, response);
+  }
+}
+
+function expectJsonValue(response, path, label) {
+  const value = response.json(path);
+
+  if (value === undefined || value === null || value === "") {
+    throw new Error(`${label} missing in response body: ${response.body}`);
+  }
+
+  return value;
+}
+
+function requestCorrelationId(label = "bench") {
+  const vu = typeof __VU === "number" ? __VU : "setup";
+  const iter = typeof __ITER === "number" ? __ITER : Date.now();
+  return `${label}-${vu}-${iter}`;
+}
+
 function jsonHeaders(extra = {}) {
   return Object.assign({
     "Content-Type": "application/json",
-    "X-Correlation-ID": `bench-${__VU}-${__ITER}`
+    "X-Correlation-ID": requestCorrelationId("bench")
   }, extra);
 }
 
@@ -32,10 +59,9 @@ export function setupTenant() {
     }
   }), { headers: jsonHeaders() });
 
-  check(bootstrap, { "bootstrap created": (r) => r.status === 201 });
+  expectStatus(bootstrap, 201, "bootstrap created");
 
-  const body = bootstrap.json();
-  const token = body.owner.api_token;
+  const token = expectJsonValue(bootstrap, "owner.api_token", "owner.api_token");
 
   const profile = http.post(`${BASE_URL}/v1/fiscal_profiles`, JSON.stringify({
     fiscal_profile: {
@@ -47,7 +73,8 @@ export function setupTenant() {
       taxation_regime: "simples_nacional",
       environment: "sandbox"
     }
-  }), { headers: authed(token) }).json("fiscal_profile");
+  }), { headers: authed(token) });
+  expectStatus(profile, 201, "fiscal profile created");
 
   const customer = http.post(`${BASE_URL}/v1/customers`, JSON.stringify({
     customer: {
@@ -57,14 +84,19 @@ export function setupTenant() {
       email: "finance@bench.test",
       city_code: "3550308"
     }
-  }), { headers: authed(token) }).json("customer");
+  }), { headers: authed(token) });
+  expectStatus(customer, 201, "customer created");
 
-  return { token, profileId: profile.id, customerId: customer.id };
+  return {
+    token,
+    profileId: expectJsonValue(profile, "fiscal_profile.id", "fiscal_profile.id"),
+    customerId: expectJsonValue(customer, "customer.id", "customer.id")
+  };
 }
 
 export function smokeScenario(data) {
   const read = http.get(`${BASE_URL}/v1/organization`, { headers: authed(data.token) });
-  check(read, { "organization read": (r) => r.status === 200 });
+  expectStatus(read, 200, "organization read");
 
   mixedApiScenario(data);
 }
@@ -82,9 +114,9 @@ export function mixedApiScenario(data) {
     }
   }), { headers: authed(data.token, { "Idempotency-Key": key }) });
 
-  check(created, { "invoice created": (r) => r.status === 201 });
-  const invoiceId = created.json("service_invoice.id");
+  expectStatus(created, 201, "invoice created");
+  const invoiceId = expectJsonValue(created, "service_invoice.id", "service_invoice.id");
 
   const read = http.get(`${BASE_URL}/v1/service_invoices/${invoiceId}`, { headers: authed(data.token) });
-  check(read, { "invoice read": (r) => r.status === 200 });
+  expectStatus(read, 200, "invoice read");
 }

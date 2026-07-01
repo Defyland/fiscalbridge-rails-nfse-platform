@@ -365,3 +365,26 @@ Por que isso importa para estudo e para modelos baratos:
   um estado coerente;
 - a qualidade do repo sobe mais corrigindo um bootstrap falso do que adicionando
   mais prosa sobre arquitetura.
+
+## 13. Addendum: benchmark bom é benchmark que roda sem ritual escondido
+
+Outra lacuna apareceu quando o caminho de benchmark foi executado como um
+reviewer executaria:
+
+- o ambiente `benchmark` quebrava antes de subir porque faltava
+  `SECRET_KEY_BASE_DUMMY`;
+- o runner disputava a porta `3000` com o fluxo normal de desenvolvimento;
+- o `k6` encontrado via `PATH` podia ser só um shim do `asdf` que não rodava.
+
+A correção útil foi tratar benchmark como contrato operacional:
+
+- o runner agora injeta `SECRET_KEY_BASE_DUMMY=1` por default para o ambiente de
+  benchmark;
+- o reset do banco de benchmark agora desliga `statement_timeout` só nessa
+  etapa, porque DDL repetido não deve morrer em cinco segundos enquanto prepara
+  o cenário;
+- a porta gerenciada passou para `BENCHMARK_PORT=3204`, deixando o app normal em
+  `localhost:3000` livre;
+- o binário de `k6` agora é validado antes de uso, com fallback portátil para
+  `GOBIN`/`GOPATH` e caminhos padrão de Homebrew;
+- as mensagens de readiness agora apontam direto para o `smoke-server.log`.

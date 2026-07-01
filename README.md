@@ -124,7 +124,7 @@ The suite uses Minitest and covers:
 
 ## 12. Performance benchmarks
 
-The `benchmarks/` directory contains k6 smoke, load, stress, and spike scenarios. The scripts exercise tenant bootstrap, authenticated organization reads, customer/profile setup, invoice creation, and invoice reads. Measured local results are documented in [`docs/benchmarks/local-baseline.md`](docs/benchmarks/local-baseline.md).
+The `benchmarks/` directory contains k6 smoke, load, stress, and spike scenarios. The scripts exercise tenant bootstrap, authenticated organization reads, customer/profile setup, invoice creation, and invoice reads. The runner starts the managed benchmark server on an isolated port by default (`BENCHMARK_PORT=3204`) and measured local results are documented in [`docs/benchmarks/local-baseline.md`](docs/benchmarks/local-baseline.md).
 
 ## 13. Observability
 

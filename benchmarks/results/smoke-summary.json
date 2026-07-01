@@ -1,183 +1,191 @@
 {
     "metrics": {
+        "vus": {
+            "value": 2,
+            "min": 0,
+            "max": 2
+        },
+        "iterations": {
+            "count": 49,
+            "rate": 1.4256254546181375
+        },
+        "http_req_connecting": {
+            "max": 0.781,
+            "p(90)": 0,
+            "p(95)": 0,
+            "p(99)": 0.25239999999999996,
+            "avg": 0.008566666666666667,
+            "min": 0,
+            "med": 0
+        },
         "http_req_failed": {
-            "fails": 176,
+            "fails": 150,
             "passes": 0,
             "thresholds": {
                 "rate<0.01": false
             },
             "value": 0
         },
-        "iteration_duration": {
-            "avg": 1055.505464724138,
-            "min": 1019.263083,
-            "med": 1038.188583,
-            "max": 1329.3455,
-            "p(90)": 1082.2574206,
-            "p(95)": 1124.74458115,
-            "p(99)": 1324.22155625
+        "http_req_sending": {
+            "med": 0.014,
+            "max": 1.84,
+            "p(90)": 0.031100000000000003,
+            "p(95)": 0.06844999999999973,
+            "p(99)": 0.4530599999999992,
+            "avg": 0.03631999999999997,
+            "min": 0.005
         },
-        "iterations": {
-            "count": 58,
-            "rate": 1.8827125278126142
+        "http_req_waiting": {
+            "p(90)": 217.6046,
+            "p(95)": 343.4527499999997,
+            "p(99)": 1268.6854599999995,
+            "avg": 107.33558666666666,
+            "min": 6.011,
+            "med": 43.626000000000005,
+            "max": 2476.685
+        },
+        "http_req_receiving": {
+            "p(90)": 0.16380000000000003,
+            "p(95)": 0.2086999999999999,
+            "p(99)": 0.47112,
+            "avg": 0.1057466666666667,
+            "min": 0.025,
+            "med": 0.0645,
+            "max": 3.009
+        },
+        "http_reqs": {
+            "count": 150,
+            "rate": 4.364159554953482
+        },
+        "iteration_duration": {
+            "max": 2571.912542,
+            "p(90)": 1484.7991086,
+            "p(95)": 1533.5852252,
+            "p(99)": 2548.65874184,
+            "avg": 1261.3714924081632,
+            "min": 1049.986958,
+            "med": 1171.726917
+        },
+        "http_req_duration{expected_response:true}": {
+            "avg": 107.47765333333336,
+            "min": 6.064,
+            "med": 43.706,
+            "max": 2479.002,
+            "p(90)": 217.7263,
+            "p(95)": 343.59734999999966,
+            "p(99)": 1268.8530799999994
+        },
+        "http_req_blocked": {
+            "avg": 0.028506666666666625,
+            "min": 0.002,
+            "med": 0.004,
+            "max": 3.083,
+            "p(90)": 0.006100000000000004,
+            "p(95)": 0.011099999999999987,
+            "p(99)": 0.2955399999999999
+        },
+        "checks": {
+            "passes": 150,
+            "fails": 0,
+            "value": 1
         },
         "http_req_tls_handshaking": {
-            "min": 0,
-            "med": 0,
-            "max": 0,
             "p(90)": 0,
             "p(95)": 0,
             "p(99)": 0,
-            "avg": 0
-        },
-        "vus": {
-            "value": 2,
-            "min": 2,
-            "max": 2
+            "avg": 0,
+            "min": 0,
+            "med": 0,
+            "max": 0
         },
         "data_received": {
-            "count": 208102,
-            "rate": 6755.107628670011
+            "count": 250733,
+            "rate": 7294.92545128101
         },
-        "http_req_sending": {
-            "p(99)": 0.29024999999999956,
-            "avg": 0.04086363636363633,
-            "min": 0.004,
-            "med": 0.012,
-            "max": 3.607,
-            "p(90)": 0.029,
-            "p(95)": 0.04849999999999999
+        "http_req_duration": {
+            "min": 6.064,
+            "med": 43.706,
+            "max": 2479.002,
+            "p(90)": 217.7263,
+            "p(95)": 343.59734999999966,
+            "p(99)": 1268.8530799999994,
+            "avg": 107.47765333333336,
+            "thresholds": {
+                "p(95)<400": false
+            }
         },
-        "http_req_connecting": {
-            "max": 0.44,
-            "p(90)": 0,
-            "p(95)": 0,
-            "p(99)": 0.402,
-            "avg": 0.00706818181818182,
-            "min": 0,
-            "med": 0
+        "data_sent": {
+            "count": 45844,
+            "rate": 1333.8035375819163
         },
         "vus_max": {
             "value": 2,
             "min": 2,
             "max": 2
-        },
-        "http_reqs": {
-            "count": 176,
-            "rate": 5.713058705086554
-        },
-        "http_req_blocked": {
-            "p(90)": 0.007,
-            "p(95)": 0.009249999999999993,
-            "p(99)": 0.4407499999999999,
-            "avg": 0.016835227272727214,
-            "min": 0.001,
-            "med": 0.003,
-            "max": 1.424
-        },
-        "data_sent": {
-            "count": 57380,
-            "rate": 1862.586980101514
-        },
-        "http_req_duration": {
-            "p(99)": 142.5372499999998,
-            "avg": 18.83401704545454,
-            "min": 3.283,
-            "med": 11.5305,
-            "max": 302.262,
-            "p(90)": 33.846000000000004,
-            "p(95)": 46.745749999999965,
-            "thresholds": {
-                "p(95)<400": false
-            }
-        },
-        "http_req_waiting": {
-            "p(90)": 33.769000000000005,
-            "p(95)": 46.51699999999997,
-            "p(99)": 142.0609999999998,
-            "avg": 18.7450340909091,
-            "min": 3.244,
-            "med": 11.442499999999999,
-            "max": 302.2
-        },
-        "http_req_duration{expected_response:true}": {
-            "min": 3.283,
-            "med": 11.5305,
-            "max": 302.262,
-            "p(90)": 33.846000000000004,
-            "p(95)": 46.745749999999965,
-            "p(99)": 142.5372499999998,
-            "avg": 18.83401704545454
-        },
-        "checks": {
-            "fails": 0,
-            "passes": 176,
-            "value": 1
-        },
-        "http_req_receiving": {
-            "avg": 0.048119318181818166,
-            "min": 0.015,
-            "med": 0.041,
-            "max": 0.245,
-            "p(90)": 0.0745,
-            "p(95)": 0.09799999999999998,
-            "p(99)": 0.21674999999999994
         }
     },
     "setup_data": {
-        "seededInvoiceId": "NFS-000001",
-        "token": "sn_owner_cNjN7A9k88wyfRBZcZgQPj1neb1EmMvB"
+        "customerId": 1,
+        "profileId": 1,
+        "token": "fb_owner_BEJkxB8G8eThFp2RXFqcuQRPohcwwS38"
     },
     "root_group": {
-        "name": "",
         "path": "",
         "id": "d41d8cd98f00b204e9800998ecf8427e",
         "groups": {
             "setup": {
-                "path": "::setup",
-                "id": "5c0f8025f7e0b6654089e5b00e950f1a",
                 "groups": {},
                 "checks": {
-                        "bootstrap returns 201": {
-                            "name": "bootstrap returns 201",
-                            "path": "::setup::bootstrap returns 201",
-                            "id": "ec868283158316a8e5a01e0736fc715a",
+                        "bootstrap created": {
+                            "path": "::setup::bootstrap created",
+                            "id": "c8b267aa469c877269c99465bf718a7e",
+                            "passes": 1,
+                            "fails": 0,
+                            "name": "bootstrap created"
+                        },
+                        "fiscal profile created": {
+                            "name": "fiscal profile created",
+                            "path": "::setup::fiscal profile created",
+                            "id": "aed73f0f87a55a23118c3849bec93e45",
                             "passes": 1,
                             "fails": 0
                         },
-                        "seed invoice returns 201": {
-                            "id": "edc109c7a3445ddb815eef1e848b9cff",
-                            "passes": 1,
+                        "customer created": {
                             "fails": 0,
-                            "name": "seed invoice returns 201",
-                            "path": "::setup::seed invoice returns 201"
+                            "name": "customer created",
+                            "path": "::setup::customer created",
+                            "id": "e35be12d634ab75a05a6e965f797c76d",
+                            "passes": 1
                         }
                     },
-                "name": "setup"
+                "name": "setup",
+                "path": "::setup",
+                "id": "5c0f8025f7e0b6654089e5b00e950f1a"
             }
         },
         "checks": {
-            "organization read returns 200": {
-                "name": "organization read returns 200",
-                "path": "::organization read returns 200",
-                "id": "20c373a2d2d5b606153e231d542ae3d7",
-                "passes": 58,
-                "fails": 0
-            },
-            "invoice read returns 200": {
-                "id": "3df04054b59744cf9fa69b46932820d0",
-                "passes": 58,
+            "organization read": {
                 "fails": 0,
-                "name": "invoice read returns 200",
-                "path": "::invoice read returns 200"
+                "name": "organization read",
+                "path": "::organization read",
+                "id": "f26d6d646f82fe22925cfe60f1268d1e",
+                "passes": 49
             },
-            "invoice create returns 201": {
-                "name": "invoice create returns 201",
-                "path": "::invoice create returns 201",
-                "id": "6734b18df2df06f960d2658f03ee8cca",
-                "passes": 58,
-                "fails": 0
+            "invoice created": {
+                "id": "dc2a8fdf863f89cd999281dd077c15a1",
+                "passes": 49,
+                "fails": 0,
+                "name": "invoice created",
+                "path": "::invoice created"
+            },
+            "invoice read": {
+                "fails": 0,
+                "name": "invoice read",
+                "path": "::invoice read",
+                "id": "da9d2aa28716bc57d5ace37783e5f825",
+                "passes": 49
             }
-        }
+        },
+        "name": ""
     }
 }

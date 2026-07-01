@@ -1,6 +1,6 @@
 # Benchmark Methodology
 
-Benchmarks use k6 and the `bin/benchmark` runner. The runner can manage a Rails benchmark server, prepare the database, wait for `/ready`, execute a scenario, export the k6 summary, and sample server CPU/RSS.
+Benchmarks use k6 and the `bin/benchmark` runner. The runner can manage a Rails benchmark server, prepare the database, inject `SECRET_KEY_BASE_DUMMY=1` for the benchmark environment, disable PostgreSQL statement timeout during benchmark database reset, wait for `/ready`, execute a scenario, export the k6 summary, and sample server CPU/RSS.
 
 Scenarios:
 
@@ -19,3 +19,5 @@ The workload covers:
 - `GET /v1/service_invoices/:public_id`
 
 Reported metrics include p50, p95, p99 latency, throughput, error rate, CPU, and RSS.
+
+The managed server uses `BENCHMARK_PORT` with a default of `3204`, and the runner probes `PATH`, `GOBIN`/`GOPATH`, and common Homebrew locations before failing for `k6`. Set `K6_BIN` to pin a specific binary when needed.

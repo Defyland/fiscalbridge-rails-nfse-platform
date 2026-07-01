@@ -9,7 +9,10 @@ require "uri"
 
 APP_ROOT = File.expand_path("..", __dir__)
 SCENARIOS = %w[smoke load stress spike].freeze
-DEFAULT_K6 = "/Users/allanflavio/.asdf/installs/golang/1.23.3/packages/bin/k6"
+COMMON_K6_PATHS = [
+  "/opt/homebrew/bin/k6",
+  "/usr/local/bin/k6"
+].freeze
 RUBY = RbConfig.ruby
 
 scenario = ARGV.fetch(0, nil)
@@ -19,20 +22,71 @@ unless SCENARIOS.include?(scenario)
   exit 64
 end
 
-def detected_k6
-  stdout, status = Open3.capture2("sh", "-lc", "command -v k6")
-  return stdout.strip if status.success? && !stdout.strip.empty?
+def shell_path_for(command)
+  stdout, status = Open3.capture2("sh", "-lc", "command -v #{command}")
+  return unless status.success?
 
-  DEFAULT_K6
+  candidate = stdout.strip
+  return if candidate.empty?
+
+  candidate
+rescue Errno::ENOENT, Errno::EACCES
+  nil
+end
+
+def go_bin_k6
+  stdout, status = Open3.capture2e("go", "env", "GOPATH")
+  return unless status.success?
+
+  gopath = stdout.lines.first.to_s.strip
+  return if gopath.empty?
+
+  File.join(gopath, "bin", "k6")
+rescue Errno::ENOENT, Errno::EACCES
+  nil
+end
+
+def runnable_binary?(candidate, *args)
+  return false if candidate.nil? || candidate.empty?
+
+  _output, probe_status = Open3.capture2e(candidate, *args)
+  probe_status.success?
+rescue Errno::ENOENT, Errno::EACCES
+  false
+end
+
+def detected_k6
+  candidates = []
+  candidates << shell_path_for("k6")
+
+  gobin = ENV["GOBIN"]
+  candidates << File.join(gobin, "k6") if gobin && !gobin.empty?
+
+  candidates << go_bin_k6
+  candidates.concat(COMMON_K6_PATHS)
+
+  candidates = candidates.compact.uniq
+
+  detected = candidates.find { |candidate| runnable_binary?(candidate, "version") }
+  return detected if detected
+
+  raise "k6 executable not found; set K6_BIN to a working binary"
 end
 
 rails_env = ENV.fetch("BENCHMARK_RAILS_ENV", "benchmark")
 host = ENV.fetch("BENCHMARK_HOST", "127.0.0.1")
-port = ENV.fetch("PORT", "3000")
+port = ENV.fetch("BENCHMARK_PORT", "3204")
 base_url = ENV.fetch("BASE_URL", "http://#{host}:#{port}")
 k6 = ENV.fetch("K6_BIN", detected_k6)
 prepare_database = ENV.fetch("BENCHMARK_PREPARE_DB", "1") == "1"
 managed_server = ENV["BASE_URL"].nil? && ENV.fetch("BENCHMARK_SKIP_SERVER", "0") != "1"
+benchmark_env = {
+  "RAILS_ENV" => rails_env,
+  "SECRET_KEY_BASE_DUMMY" => ENV.fetch("SECRET_KEY_BASE_DUMMY", "1")
+}.freeze
+database_prepare_env = benchmark_env.merge(
+  "POSTGRES_STATEMENT_TIMEOUT_MS" => ENV.fetch("BENCHMARK_POSTGRES_STATEMENT_TIMEOUT_MS", "0")
+).freeze
 results_dir = File.join(APP_ROOT, "benchmarks/results")
 summary_path = File.join(results_dir, "#{scenario}-summary.txt")
 json_path = File.join(results_dir, "#{scenario}-summary.json")
@@ -54,13 +108,15 @@ rescue Errno::ESRCH
   false
 end
 
-def wait_for_ready!(base_url, server_pid:)
+def wait_for_ready!(base_url, server_pid:, server_log_path:)
   uri = URI("#{base_url}/ready")
   deadline = Time.now + Integer(ENV.fetch("BENCHMARK_BOOT_TIMEOUT", "30"), 10)
 
   until Time.now > deadline
     begin
-      raise "benchmark server exited before readiness" if server_pid && !process_alive?(server_pid)
+      if server_pid && !process_alive?(server_pid)
+        raise "benchmark server exited before readiness; inspect #{server_log_path}"
+      end
 
       response = Net::HTTP.start(uri.host, uri.port, open_timeout: 1, read_timeout: 1) do |http|
         http.get(uri.request_uri)
@@ -74,10 +130,10 @@ def wait_for_ready!(base_url, server_pid:)
   end
 
   if server_pid && !process_alive?(server_pid)
-    raise "benchmark server exited before readiness"
+    raise "benchmark server exited before readiness; inspect #{server_log_path}"
   end
 
-  raise "benchmark server did not become ready at #{uri}"
+  raise "benchmark server did not become ready at #{uri}; inspect #{server_log_path}"
 end
 
 def start_resource_monitor(pid, samples_path)
@@ -121,13 +177,12 @@ server_log = nil
 
 begin
   if prepare_database
-    run!(RUBY, "bin/rails", "db:migrate:reset", env: { "RAILS_ENV" => rails_env })
+    run!(RUBY, "bin/rails", "db:migrate:reset", env: database_prepare_env)
   end
 
   if managed_server
     server_log = File.open(server_log_path, "w")
-    server_env = ENV.to_h.merge(
-      "RAILS_ENV" => rails_env,
+    server_env = ENV.to_h.merge(benchmark_env).merge(
       "PORT" => port,
       "PIDFILE" => pidfile_path,
       "RAILS_LOG_TO_STDOUT" => "1",
@@ -135,9 +190,9 @@ begin
     )
     server_pid = spawn(server_env, RUBY, "bin/rails", "server", "-b", host, "-p", port,
                        chdir: APP_ROOT, out: server_log, err: server_log)
-    wait_for_ready!(base_url, server_pid: server_pid)
+    wait_for_ready!(base_url, server_pid: server_pid, server_log_path: server_log_path)
   else
-    wait_for_ready!(base_url, server_pid: nil)
+    wait_for_ready!(base_url, server_pid: nil, server_log_path: server_log_path)
   end
 
   monitored_pid = server_pid || ENV["SERVER_PID"]&.to_i
