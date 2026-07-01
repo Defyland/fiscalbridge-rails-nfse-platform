@@ -1,6 +1,24 @@
 #!/bin/bash -e
 
-if [ "$1" == "bundle" ] && [ "$2" == "exec" ] && { [ "$3" == "thrust" ] || [ "$3" == "puma" ]; }; then
+should_prepare_db() {
+  if [ "$1" != "bundle" ] || [ "$2" != "exec" ]; then
+    return 1
+  fi
+
+  case "$3" in
+    thrust|puma)
+      return 0
+      ;;
+    rails)
+      [ "${4:-}" = "server" ]
+      return
+      ;;
+  esac
+
+  return 1
+}
+
+if should_prepare_db "$@"; then
   bundle exec rails db:prepare
 fi
 

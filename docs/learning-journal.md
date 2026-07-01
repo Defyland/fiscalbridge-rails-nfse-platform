@@ -18,8 +18,9 @@ Este journal documenta a história do repositório até o commit `b2ae720`, que 
   o texto descreve só o que o diff permite afirmar.
 
 - Escopo:
-  commits já gravados até `b2ae720`. Se novas mudanças forem adicionadas depois
-  desta edição, o journal precisa ser avançado junto.
+  a narrativa principal abaixo cobre commits já gravados até `b2ae720`. Addenda
+  posteriores podem registrar loops específicos de melhoria sem reescrever o
+  journal inteiro.
 
 ## O que o histórico não prova
 
@@ -337,3 +338,30 @@ Se a próxima feature for, por exemplo, um novo provider adapter:
 - não prova volume alto com artefatos fiscais pesados;
 - não prova governança regulatória fora do escopo do sandbox;
 - não tenta ensinar billing ou accounting completo além do fluxo fiscal estudado.
+
+## 12. Addendum: 2026-06-30 - o bootstrap documentado precisa ser verdadeiro
+
+Uma lacuna prática apareceu quando o contrato público do README foi executado de
+verdade: `docker compose up --build` levantava a stack, mas a app respondia com
+`ActiveRecord::PendingMigrationError`. O problema não estava no domínio fiscal,
+e sim na fronteira operacional. O `bin/docker-entrypoint` preparava o banco só
+para caminhos baseados em `thrust` ou `puma`, enquanto o `docker-compose.yml`
+subia a web com `bundle exec rails server` e o worker com `bundle exec bin/jobs`.
+
+A correção pequena e valiosa foi alinhar a verdade operacional com a verdade
+documentada:
+
+- ampliar o entrypoint para rodar `bin/rails db:prepare` quando a stack sobe
+  com `bundle exec rails server`, que é o caminho real do serviço web local;
+- fazer o worker esperar o web service iniciar, em vez de disputar a mesma
+  preparação de banco em paralelo;
+- registrar uma trilha curta de avaliação usando porta isolada, health checks e
+  bootstrap real de tenant.
+
+Por que isso importa para estudo e para modelos baratos:
+
+- um reviewer rápido não deveria precisar adivinhar migração manual escondida;
+- um modelo barato opera melhor quando o primeiro comando documentado já leva a
+  um estado coerente;
+- a qualidade do repo sobe mais corrigindo um bootstrap falso do que adicionando
+  mais prosa sobre arquitetura.

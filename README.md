@@ -164,6 +164,57 @@ The `benchmarks/` directory contains k6 smoke, load, stress, and spike scenarios
 - API-token auth remains for B2B integrations; Rails-style session auth is added for human operators.
 - Production hardening is explicit: this repo implements the self-contained controls that fit a challenge and documents the controls that need real provider, compliance, and infrastructure inputs.
 
+## 15A. How to evaluate this repo in 5 minutes
+
+1. Prove the repository contract is green:
+
+```sh
+bin/ci
+```
+
+2. In one terminal, boot the full local stack on an isolated port:
+
+```sh
+APP_PORT=3101 docker compose up --build
+```
+
+3. In a second terminal, prove health, readiness, and tenant bootstrap:
+
+```sh
+slug="acme-fiscal-ops-$(date +%s)"
+owner_email="owner-${slug}@acme.test"
+curl -s http://127.0.0.1:3101/up
+curl -s http://127.0.0.1:3101/ready
+curl -s -X POST http://127.0.0.1:3101/v1/organizations \
+  -H "Content-Type: application/json" \
+  -d '{
+    "organization": {
+      "name": "Acme Fiscal Ops",
+      "slug": "'"$slug"'",
+      "legal_name": "Acme Fiscal Ops Ltda",
+      "tax_id": "11.222.333/0001-81",
+      "municipal_registration": "123456",
+      "plan": "growth",
+      "monthly_invoice_limit": 750
+    },
+    "owner": {
+      "email": "'"$owner_email"'",
+      "full_name": "Owner Admin"
+    }
+  }'
+```
+
+What those checks prove:
+
+- `bin/ci` proves the Rails, system, security, OpenAPI, and seed contract that
+  backs the repo's public claims.
+- `docker compose up --build` proves the documented local stack boots with
+  PostgreSQL, web, and jobs together instead of relying on manual migration
+  prep or hidden container ordering.
+- `/up` and `/ready` prove the runtime and database boot path are live.
+- `POST /v1/organizations` proves the public API can bootstrap a tenant on a
+  fresh local stack.
+
 ## 16. How to run locally
 
 ```sh
@@ -172,6 +223,8 @@ docker compose up --build
 
 Then open `http://localhost:3000`, call `http://localhost:3000/up`, or bootstrap a tenant with `POST /v1/organizations`.
 If port 3000 is already in use, run with `APP_PORT=3001 docker compose up --build` and open `http://localhost:3001`.
+The web service prepares the database automatically before it boots, and the
+jobs service waits for the web container to start before joining the stack.
 
 Seeded backoffice credentials:
 

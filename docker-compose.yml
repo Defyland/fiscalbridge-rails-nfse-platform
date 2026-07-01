@@ -60,6 +60,8 @@ services:
       CHROME_BIN: /usr/bin/chromium
       CHROMEDRIVER_PATH: /usr/bin/chromedriver
     depends_on:
+      app:
+        condition: service_started
       db:
         condition: service_healthy
     volumes:
